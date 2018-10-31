@@ -92,11 +92,70 @@ mVid.windowVideoObjects = {
 
 mVid.startTime = Date.now();
 
+mVid.sendResult = function(msg){
+	
+	var ResultServiceUrl = "./testcase";
+	mVid.Log.info("sendResult : " + JSON.stringify(msg));
+	
+	function callback(json, xhr) {
+		try {
+			mVid.Log.info(json);
+			
+		} catch(e) {
+			mVid.Log.error(e);			
+		}
+	}
+	
+	function ajax() {
+		try {
+			var x = new (this.XMLHttpRequest || ActiveXObject)('MSXML2.XMLHTTP.3.0');
+			x.open('POST', ResultServiceUrl, 1);
+			x.setRequestHeader('Content-type', 'application/json');
+			x.onreadystatechange = function() {
+				x.readyState > 3 && callback && callback(x.responseText, x);
+			};
+			x.send(JSON.stringify(msg));
+		} catch (e) {
+			mVid.Log.error(e);
+		}
+	};
 
+	ajax();
+}
 
-mVid.start = function () {
-    var that        = this;
-    
+mVid.init = function (channel) {
+	var that 		= this;
+	
+	
+	this.tvui		= window.InitTVUI();
+	
+	this.srvComms 	= window.InitServerComms(GLOBAL_SERVERGUI);
+	this.Log 		= window.InitLog(this.srvComms);
+	
+	this.Log.info("app loaded");
+
+	this.Log.info("GLOBAL_SERVERGUI: " + GLOBAL_SERVERGUI);
+
+	// Parse query params
+	this.params = [];
+	
+	this.params.overrideSubs 	= commonUtils.getUrlVars()["subs"] || "";
+	this.params.bCheckResume 	= commonUtils.getUrlVars()["checkresume"] || false;
+	this.params.bWindowedObjs	= commonUtils.getUrlVars()["win"] || false; 
+	this.params.bEventsDump		= commonUtils.getUrlVars()["eventdump"] || false;
+	this.params.bPartialSCTE	= commonUtils.getUrlVars()["partialscte"] || false;
+
+	this.hbbtv = window.InitHBBTVApp(this.Log);
+	
+	that.transitionThresholdMS 	= AD_TRANS_THRESHOLD_MS;
+	that.bShowBufferingIcon		= false;
+
+	document.addEventListener("keydown", that.OnKeyDown.bind(that));
+	
+};
+
+mVid.start = function (channel) {
+	var that 		= this;
     this.EOPlayback = false;
     this.bAttemptStallRecovery = false;
     
@@ -1266,17 +1325,37 @@ function onVideoEvent (m) {
             m.updateBufferStatus(this.id, "Event: " + event.type);
             break;
 
-        case m.videoEvents.SUSPEND:
-        case m.videoEvents.ABORT:
-        case m.videoEvents.EMPTIED:
-        case m.videoEvents.LOADED_DATA:
-        case m.videoEvents.PLAYING:
-        case m.videoEvents.SEEKING:
-        case m.videoEvents.DURATION_CHANGE:
-        case m.videoEvents.RATE_CHANGE:
-        case m.videoEvents.VOLUME_CHANGE:
-            m.updateBufferStatus(this.id, "Event: " + event.type);
-            break;
+			
+			case m.videoEvents.PLAYING:
+				if(mVid.calTime){
+					var myDate = new Date();
+					var endTime = myDate.getTime();
+					var gap = endTime - m.startPlayTime;
+					m.Log.info(m.testCase+"(" + this.id + ")"+ ": (PLAYING)time£º" + gap + "ms");
+					mVid.calTime = false;
+					var jsongap = [];
+					var row = {};
+					row.value = gap;
+					jsongap.push(row);
+					m.sendResult(jsongap);
+				}
+				break;
+				
+			case m.videoEvents.SEEKING:	
+				mVid.calTime = true;
+				var myDate = new Date();
+				m.startPlayTime = myDate.getTime();
+				m.Log.info(m.testCase+"(" + this.id + ")"+ ": start seek");
+				break;
+		    case m.videoEvents.SUSPEND:
+			case m.videoEvents.ABORT:
+			case m.videoEvents.EMPTIED:
+			case m.videoEvents.LOADED_DATA:			
+			case m.videoEvents.DURATION_CHANGE:
+			case m.videoEvents.RATE_CHANGE:
+			case m.videoEvents.VOLUME_CHANGE:
+				m.updateBufferStatus(this.id, "Event: " + event.type);
+				break;
 
         default:
                 //do nothing
@@ -1672,19 +1751,263 @@ keyTable.entries = [
     { func : function() {this.setChannel(9);},  key : "9",  hbbKey : getKey("VK_9")  } 
 ];
 
+/*
+var testList;
+
+var testFuncTable = [
+	{func : mVid.testfunc101,  id : "t101"},
+	{func : mVid.testfunc102,  id : "t102"},
+	{func : mVid.testfunc201,  id : "t201"},
+	{func : mVid.testfunc202,  id : "t202"},
+	{func : mVid.testfunc301,  id : "t301"},
+	{func : mVid.testfunc302,  id : "t302"},
+	{func : mVid.testfunc401,  id : "t401"},
+	{func : mVid.testfunc402,  id : "t402"},
+	{func : mVid.testfunc501,  id : "t501"},
+	{func : mVid.testfunc502,  id : "t502"},
+	{func : mVid.testfunc601,  id : "t601"},
+	{func : mVid.testfunc602,  id : "t602"},
+	{func : mVid.testfunc701,  id : "t701"},
+	{func : mVid.testfunc702,  id : "t702"},
+	{func : mVid.testfunc801,  id : "t801"},
+	{func : mVid.testfunc802,  id : "t802"},
+	{func : mVid.testfunc901,  id : "t901"},
+	{func : mVid.testfunc902,  id : "t902"},
+	{func : mVid.testfunc1001, id : "t1001"},
+	{func : mVid.testfunc1002, id : "t1002"},
+	{func : mVid.testfunc1101, id : "t1101"},
+	{func : mVid.testfunc1102, id : "t1102"},
+	{func : mVid.testall,      id : "testall"}
+];
+*/
+mVid.OnCheckResult = function(){
+	var vid = this.getCurrentPlayingVideo();
+	this.Log.info("OnCheckResult id = " + this.testCase );
+	if(this.testCase == "t101"){
+		if(vid.networkState == 2 && vid.currentTime > 60){
+			var jsongap = [];
+			var row = {};
+			row.id = "t101";
+			row.result = "success"
+			jsongap.push(row);
+			this.sendResult(jsongap);
+		}
+		else {
+			this.Log.info("OnCheckResult " + this.testCase + " fail ,network:" + vid.networkState + " ,time:" + vid.currentTime);
+		}
+	}
+};
+
+mVid.testfunc101 = function(id){
+	var that 		= this;
+	
+	this.EOPlayback = false;
+	this.bAttemptStallRecovery = false;
+	this.showPlayrange();
+	
+	if (location.protocol === 'https:') {
+		this.tvui.ShowSecure(true);
+	}
+	this.testCase = id;
+	
+	window.getPlaylist(id || "0", this.Log, function(ch, playObj) {     
+
+        that.procPlaylist(ch, playObj);
+
+        
+        that.transitionThresholdMS  = AD_TRANS_THRESHOLD_MS;
+        that.bShowBufferingIcon     = false;
+                
+        that.showBufferingIcon(false);
+
+        document.addEventListener("keydown", that.OnKeyDown.bind(that));
+
+        
+        window.setInterval( function() {
+            that.updateAllBuffersStatus();  
+        }, 1000);
+
+        if (playObj.type === "video/broadcast") {
+
+            that.Log.info("*** Use Video Broadcast Object ***");
+
+            that.broadcast = window.SetupBroadcastObject("mVid-broadcast", "player-container", that.Log);
+            
+            if (that.broadcast) {
+                that.tvui.ShowTransportIcons(false);
+                
+                that.broadcast.bind();
+                
+                if (playObj.timeline && playObj.timeline.selector) {
+                    that.broadcast.initMediaSync(playObj.timeline.selector, 
+                        function() {
+                            that.tvui.ShowMSyncIcon("msyncicon");
+                        }, 
+                        function(err) {
+                            that.tvui.ShowMSyncIcon("nomsyncicon");
+                        }
+                    );
+                    if (that.params.bWindowedObjs) {
+                        that.broadcast.setWindow(that.windowVideoObjects["mVid-broadcast"]);
+                    }
+                    
+                    that.broadcast.contentDuration = playObj.contentDuration;
+                    that.broadcast.adsDuration = playObj.adsDuration;
+                    that.broadcast.cumulativeAdTransMS = 0;
+                    that.broadcast.previousTimeMS = 0;
+                    
+                    that.broadcast.fps = playObj.timeline.fps ? playObj.timeline.fps : CONTENT_FPS;
+                    
+                    that.broadcast.bSetupAdTransEvents = true;
+                    that.broadcast.bTimePlayTransition = false;
+                    that.broadcast.setTimeUpdateEvents(onMsyncTimeUpdate(that));
+                } else {
+                    that.Log.warn("MediaSync timeline not defined.");           
+                }
+            } else {
+                that.Log.error("Broadcast object init failed.");            
+            }
+            
+        } else {
+            that.resetStallTimer();
+        
+            var mainVideo = that.createVideo("mVid-mainContent");
+
+            that.cues = window.InitCues(
+                {
+                    log     : that.Log, 
+                    tvui    : that.tvui, 
+                    params  : that.params, 
+                    cfg     : that.hbbtv.cfg, 
+                    fGetCurrentPlayingVideo : that.getCurrentPlayingVideo.bind(that),
+                    fUpdateBufferStatus     : that.updateBufferStatus.bind(that),
+                    eventSchemeIdUri        : playObj.eventSchemeIdUri
+                }
+            );
+
+            if (!that.broadcast) {
+                that.tvui.ShowPlayingState("stop");
+            }
+            
+            // Clear key
+            const KEYSYSTEM_TYPE = "org.w3.clearkey";
+
+            var options = [];
+            const audioContentType = "audio/mp4; codecs=\"mp4a.40.2\""; 
+            const videoContentType = "video/mp4; codecs=\"avc3.4D4015\""; 
+
+            options = [
+                {
+                    initDataTypes: ["cenc"],
+                    videoCapabilities: [{contentType: videoContentType}],
+                    audioCapabilities: [{contentType: audioContentType}],
+                }
+            ];
+
+            if (typeof navigator.requestMediaKeySystemAccess !== "undefined") {
+                window.SetupEME(mainVideo, KEYSYSTEM_TYPE, "video", options, that.contentTag, that.Log).then(function(p) {
+                    that.Log.info(p);
+                    that.setContentSourceAndLoad(); 
+					var playingVideo = that.getCurrentPlayingVideo();
+					that.seek(playingVideo, 60);					
+                }, function(p) {
+                    that.Log.error(p);
+                });
+                that.bEMESupport = true;
+            } else {
+                that.setContentSourceAndLoad();
+				var playingVideo = that.getCurrentPlayingVideo();
+				that.seek(playingVideo, 60);
+                that.tvui.ShowEncrypted("noeme");
+                that.bEMESupport = false;
+            }		
+        }
+        
+    });
+	window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
+};
+ 
+mVid.menueSwitch = function(id, show){
+	if(show){
+		var app = e("app_area");
+		app.style.display = "none";
+		var innerhtml = "";
+		if(id === 0){
+			var i;
+			for(i = 0; i < testList.Class.length; i++){
+				innerhtml += "<div class=\"testcase\" id =\"";
+				innerhtml += testList.Class[i].id + "\">";
+				innerhtml += testList.Class[i].name;
+				innerhtml += "</div>";
+			}
+		}
+		else{
+			var i, j;
+			for(i = 0; i < testList.Class.length; i++){
+				if(testList.Class[i].id === id)
+					break;
+			}
+			for(j = 0; j < testList.Class[i].testcase.length; j++){
+				innerhtml += "<div class=\"testcase\" id =\"";
+				innerhtml += testList.Class[i].testcase[j].id + "\">";
+				innerhtml += testList.Class[i].testcase[j].name;
+				innerhtml += "<\/div>";
+			}
+			innerhtml += "<div class=\"testcase\" id =\"back\"> return <\/div>"
+		}
+		var menue = e("menue");
+		menue.innerHTML = innerhtml;
+		menue.style.display = "inline";
+		
+		var testcasebtn = document.getElementsByClassName("testcase");
+		for(var i = 0; i < testcasebtn.length; i++){
+			testcasebtn[i].onclick = mVid.testcaseClick;
+		}
+	}
+	else{
+		var app = e("app_area");
+		app.style.display = "inline";
+		var menue = e("menue");
+		menue.style.display = "none";
+	}
+}
+
+mVid.menueload = function (){
+	function getCallback(testlistObj){
+		testList = JSON.parse(testlistObj);
+		mVid.menueSwitch(0,true);
+	}
+	window.getTestlist(getCallback);
+}
 
 
-
-
+mVid.testcaseClick = function(){
+	if(this.id.length < 3){
+		mVid.menueSwitch(this.id ,true);
+	}else{
+		if(this.id === "back")
+			mVid.menueSwitch(0,true);
+		else{
+			mVid.menueSwitch(0,false);
+			switch(this.id){
+				case "t101":{
+				     mVid.testfunc101(this.id);
+					 break;
+				}
+				default:
+					 mVid.start(this.id);
+					 break;
+			}
+		}
+	}
+	
+};
 // ---------------------------------------------------------------------- //
 // ---------------------------------------------------------------------- //
 // ---------------------------------------------------------------------- //
 window.onload = function () {
-    try {
-        mVid.start();
-    } catch (error) {
-        mVid.Log.error("FATAL ERROR: " + error.message);
-    }
+	mVid.init();
+	mVid.menueload();
 };
 
 window.onbeforeunload = function () {

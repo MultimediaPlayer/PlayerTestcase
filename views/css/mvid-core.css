@@ -55,7 +55,30 @@ div.safe_area
 	display: none;
 	background-color: transparent;
 }
-
+.menue_area {
+	position: absolute;
+	/* Border of the safe area: 10% 5% 80% 90 */ 
+	left: 64px; top: 36px; width: 1024px; height: 648px;
+	background-color: #fcfcfc;
+	z-index:99;
+}
+.testcase{
+	text-align:center;
+	margin-top: 10px;
+	height:26px;
+    border-radius:3px 4px 5px 6px;
+	border:1px solid #000;
+	background:#f0fff0;
+    color:#f08080;
+}
+.testcase:hover{
+	text-align:center;
+	margin-top: 10px;
+    border-radius:3px 4px 5px 6px;
+	border:1px solid #000;
+	background:#fff;
+    color:#ff6a6a;
+}
 p {
 	color: white;
 }
