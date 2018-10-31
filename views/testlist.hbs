@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta 	http-equiv="Content-Type" content="application/vnd.hbbtv.xml+xhtml; utf-8" />
+
+		<script type="text/javascript" src="https://cdn.dashjs.org/latest/dash.all.debug.js"></script>
+        <script src="/socket.io/socket.io.js" charset="utf-8"></script> <!-- needed for sockets io to be able to detect the client -->
+
+        <script type="text/javascript" src="common/utils.js"></script>		
+        <script type="text/javascript" src="js/log.js"></script>
+        <script type="text/javascript" src="js/servercomms.js"></script>
+        <script type="text/javascript" src="js/broadcast.js"></script>
+        <script type="text/javascript" src="js/eme.js"></script>
+        <script type="text/javascript" src="js/lic.js"></script>
+        <script type="text/javascript" src="js/playlist.js"></script>
+		<script type="text/javascript" src="js/testlist.js"></script>
+		<script type="text/javascript" src="js/tvui.js"></script>
+		<script type="text/javascript" src="js/cues.js"></script>
+		<script type="text/javascript" src="js/keys.js"></script>
+		<script type="text/javascript" src="js/hbbtvapp.js"></script>
+
+        <script type="text/javascript" src="js/mvid.js"></script>
+ 		
+        <link 	rel="stylesheet" href="css/mvid-core.css" />
+        <link 	rel="stylesheet" href="css/{{style}}.css" />
+		<link 	href="https://fonts.googleapis.com/css?family=VT323" rel='stylesheet' type='text/css'/> 
+		<link 	href="https://fonts.googleapis.com/css?family=Share+Tech+Mono" rel='stylesheet' type='text/css'/>
+	</head>
+
+	<body>
+		<div id="player-container" class="video">
+		</div>
+		<div id="menue" class="menue_area">
+		</div>
+		<div class="safe_area" id="app_area">
+			<div class="status-container">
+				<p id="currentChannel">---</p>
+			</div>
+			<div class="progress-bar-container">
+				<div class="barcontainer">
+					<p>Main Buffer:</p> 
+					<progress value="0" max="100" id="mVid-mainContent-bufferBar" 	class="notinuse" 		role="progressbar">
+					</progress>
+					<progress value="0" max="100" id="mVid-mainContent-headroomBar" 	class="notinuse" 	role="progressbar">
+					</progress>
+				</div>
+				<div class="barcontainer">
+					<p>Video 0 Buffer:</p> 
+					<progress value="0" max="100" id="mVid-video0-bufferBar" 		class="notinuse" role="progressbar">
+					</progress>
+					<progress value="0" max="100" id="mVid-video0-headroomBar" 		class="notinuse" role="progressbar">
+					</progress>
+				</div>
+				<div class="barcontainer">
+					<p>Video 1 Buffer:</p> 
+					<progress value="0" max="100" id="mVid-video1-bufferBar" 		class="notinuse" 		role="progressbar">
+					</progress>
+					<progress value="0" max="100" id="mVid-video1-headroomBar" 		class="notinuse" 		role="progressbar">
+					</progress>
+				</div>
+			</div>
+			<div class="msync">
+				<p id="msync-time" class="msync-text msync-hide">
+					00:00-00
+				</p>
+			</div>
+			<div class="videoGFXOverlay">
+				<div class="centre fitwidth">
+					<img src="bitmaps/buffering2.png" 	id="player-buffering" 	class="playerBufferingIcon"></img>				
+				</div>
+			</div>
+			<div class="videoControls">
+				<p id="versionInfo">{{version}}</p>
+				<div id="playrange">
+					<img src="bitmaps/arrow.png" 		id="ad-start-point" 	class="ad-arrow"></img>				
+					<img src="bitmaps/arrow.png" 		id="ad-resume-point" 	class="ad-arrow"></img>				
+					<img src="bitmaps/arrow-blue.png" 	id="ev-arrow" 			class="ad-arrow hidden"></img>				
+				</div>
+				<p style="height:20px"/>
+				<div>
+					<progress value="0" max="100" id="playbackBar" class="playbackBar" role="progressbar"></progress>
+					<img src="bitmaps/heart.png" id="heart" class="beat"></img>				
+					<!--p id="videoTimer" style="font-family: 'VT323'">00:00:00:000</p-->
+				</div>
+				<p style="height:10px"/>
+				<div class="centre fitwidth">
+					<img src="bitmaps/flag.png" 			id="flag" 			class="playerIcon"></img>
+					<img src="bitmaps/subs.png" 			id="subs" 			class="playerIcon hidden"></img>
+					<img src="bitmaps/player_rew2.png" 		id="player-rew" 	class="playerIcon"></img>				
+					<img src="bitmaps/player_play2.png" 	id="player-play" 	class="playerIcon"></img>				
+					<img src="bitmaps/player_fwd2.png" 		id="player-fwd" 	class="playerIcon"></img>				
+					<img src="bitmaps/player_pause2.png" 	id="player-pause" 	class="playerIcon"></img>				
+					<img src="bitmaps/player_stop2.png" 	id="player-stop" 	class="playerIcon"></img>				
+					<img src="bitmaps/key.png" 				id="encrypted" 		class="playerIcon"></img>				
+					<img src="bitmaps/padlock.png" 			id="padlock"		class="playerIcon"></img>
+					<img src="bitmaps/clock.png" 			id="clock"			class="playerIcon hidden"></img>
+					<p id="cuedata"></p>
+				</div>
+			</div>
+		</div>
+        <script type="text/javascript">
+			var GLOBAL_SERVERGUI = {{serverGUI}};
+		</script>
+    </body>
+</html>
