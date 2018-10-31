@@ -1,4 +1,13 @@
 var log4js = require("log4js");
+log4js.configure({
+  appenders: {
+    out: { type: 'stdout' },//设置是否在控制台打印日志
+    info: { type: 'file', filename: './logs/info.log' }
+  },
+  categories: {
+    default: { appenders: [ 'out', 'info' ], level: 'all' }//去掉'out'。控制台不打印日志
+  }
+});
 var logger = log4js.getLogger();
 logger.level = "debug";
 
@@ -454,7 +463,7 @@ expressSrv.post("/adtrans", function(req, res) {
     res.send(); // Send an empty response to stop clients from hanging
 });
 
-expressSrv.get("/*.html", function(req, res) {
+expressSrv.get("/index.html", function(req, res) {
     var UA = req.headers["user-agent"];
 
     if (runOptions.bMultiDevs || !generalInfo.currentDeviceUA || (generalInfo.currentDeviceUA === UA)) {
@@ -492,6 +501,45 @@ expressSrv.get("/*.html", function(req, res) {
         res.status(503);
         res.send("Sorry, another device is already attached.  Please disconnect it and try again.");
     }
+});
+expressSrv.get('/testlist.html', function(req, res) {
+	var UA = req.headers['user-agent'];
+	
+	if (runOptions.bMultiDevs || !generalInfo.currentDeviceUA || (generalInfo.currentDeviceUA === UA)) {
+		generalInfo.currentDeviceUA = UA;
+		generalInfo.devName = commonUtils.extractDevName(generalInfo.currentDeviceUA);
+		logger.debug(" ---> App loaded by: " + generalInfo.devName);
+		logger.debug("   UA: " + UA);
+		
+		//createWindows();
+		
+		win['log'].reload();
+		win['allvideoobjs'].reload();
+		win['mainvideoobj'].reload();
+		win['ad0videoobj'].reload();
+		win['ad1videoobj'].reload();
+		win['adtrans'].reload();
+		
+		var v = generalInfo.version;
+		var sRelType = v.dev == "true" ? "dev" : "";
+		
+		res.render('testlist.hbs', 
+			{
+				version: "v" + generalInfo.version.major + "." + generalInfo.version.minor + sRelType,
+				style		: v.dev == "true" ? "mvid-dev" : "mvid",
+				serverGUI	: GUI ? "true" : "false"
+			}, 
+			function(err, html) { 
+			res.status(200);
+			res.send(html);
+			logger.trace("UserAgent: " + req.headers['user-agent']);
+			logger.trace(JSON.stringify(req.headers));
+		});
+		
+	} else {
+			res.status(503);
+			res.send("Sorry, another device is already attached.  Please disconnect it and try again.");	
+	}
 });
 
 expressSrv.get("/player.aitx", function(req, res) {
@@ -712,7 +760,141 @@ expressSrv.get("/content/*", function(req, res) {
                 return res.sendStatus(400);
             });
     });
+});
 
+expressSrv.get('/hls/*', function(req, res) {
+	
+	var suffix = req.path.split('.').pop();
+	var cType;
+	
+	if (suffix === "m3u8") {
+		cType = "application/x-hls";
+	}else{
+		cType = "video/mp2t"
+	}
+	logger.trace(" - suffix: " + suffix + " Content-Type: " + cType);
+	
+	logger.debug("GET content: " + req.path);
+	logger.trace(JSON.stringify(req.headers));
+	
+	if (runOptions.bMultiDevs) {
+			var u = req.headers['user-agent'];			
+			var d = commonUtils.extractDevName(u);
+			
+			if (d === "UnknownModel") {
+				logger.debug("    UA: " + u);
+			} else {
+				logger.debug("    Device: " + d);
+				logger.debug("       IP: " + req.ip);
+			}
+	}
+	
+	
+	// ***** Simulate error condition (503)? *****
+	var nErrs = commonConfig.getNetworkErrors();
+	
+	if (nErrs.value != 0) {
+		var rndErr = Math.floor(Math.random() * (nErrs.value - 1));
+		
+		if (rndErr === 0) {
+			// Simulate error (503)
+			logger.info("SIMULATE ERROR! (503)");
+			return res.sendStatus(503);
+		}
+	}
+
+	// Get file on server
+	var file;
+	
+	if (runOptions.prependContentPath) {
+		file = runOptions.prependContentPath + req.path;
+		logger.debug(" - file (prepended dir): " + file);
+	} else {
+		file = path.join(__dirname, req.path);
+		logger.trace(" - file: " + file);
+	}
+	
+	
+    fs.stat(file, function(err, stats) {
+		if (err) {
+			if (err.code === 'ENOENT') {
+				// 404 Error if file not found
+				logger.error(" * file does not exist");
+				return res.sendStatus(404);
+			}
+			logger.error(" * error in file request: " + file);
+			return res.sendStatus(400);
+		}
+		
+		if (!stats.isFile()) {
+			logger.error(" * error in file request: " + file);
+			return res.sendStatus(400);
+		}
+		logger.debug(req.headers);
+		
+		var range = req.headers.range;
+
+		var start;
+		var end;
+		var chunksize;
+		var total = stats.size;
+		var rtn = 200;
+		
+		if (range) {
+			var positions = range.replace(/bytes=/, "").split("-");
+			start = parseInt(positions[0], 10);
+			end = positions[1] ? parseInt(positions[1], 10) : total - 1;
+
+			logger.debug(" - range: " + range);
+			logger.debug(" - positions: " + positions);
+		} else {
+			start = 0;
+			end = total - 1;		
+		}
+
+		chunksize = (end - start) + 1;
+
+		logger.trace(" - total: " + total);
+
+		logger.trace(" - start: " + start);
+		logger.trace(" - end: " + end);
+		logger.trace(" - chunksize: " + chunksize);
+
+		if ((chunksize+start) < total) {
+			rtn = 206;
+		} 
+		logger.trace(" - rtn: " + rtn);
+		
+		if (start >= end) {
+			logger.error(" * Error: start >= end!");
+			return res.sendStatus(400);
+		}
+
+		var stream = fs.createReadStream(file, { start: start, end: end })
+			.on("open", function() {
+				res.writeHead(rtn, {
+					"Content-Range": "bytes " + start + "-" + end + "/" + total,
+					"Accept-Ranges": "bytes",
+					"Content-Length": chunksize,
+					"Content-Type": cType,
+					"Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+					"Access-Control-Allow-Origin": "*"
+				});			
+
+				logger.trace(" - send chunk");
+				var nThrot = commonConfig.getNetworkThrottle();
+				
+				if (nThrot.value != 0) {
+					stream.pipe(new Throttle({rate: nThrot.value * (1024 * 1024) / 8, chunksize: 2048 * 1024})).pipe(res);
+					logger.info("Throttle server: " + nThrot.name);
+				} else {
+					stream.pipe(res);				
+				}
+			}).on("error", function(err) {
+				return res.sendStatus(400);
+			});
+	});
+	
 });
 
 expressSrv.get("/time", function(req, res) {
@@ -1623,6 +1805,13 @@ expressSrv.post("/getkeys", function(req, res) {
         logger.error(" * no tag");
         return res.sendStatus(404);
     }
+});
+
+expressSrv.post('/testcase', function(req, res) {
+	var info = req.body;
+	
+	logger.info("testcase result: " + JSON.stringify(info));
+	logger.info(" - url: " + req.path);
 });
 
 function sendConnectionStatus() {
