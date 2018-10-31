@@ -1,0 +1,20 @@
+{
+	"ads" 				: [],
+	"src" 				: "./content/da541050/_TESTSUITE/TESTS/org.hbbtv_DA541050/DA541050.mpd",
+	"type" 				: "application/dash+xml",
+	"transitionTime" 	: "-1",
+	"addContentId" 		: "false",
+	"channelName" 		: "Bookmark playback - dash",
+
+	"info"				: [	"Static Manifest (Adverts and Main Content):",
+							"  - Content duration 60m",
+							"  - Split into 12 Periods",
+							"  - ITV and Ch4 Ads",
+							"  - Ad period, starts every 10m",
+							"  - Ad period lasts 1m",
+							"  - Main period, starts after Ad",
+							"  - Main period lasts 9m",
+							"  - Clear Key (main content)",
+							"  - Subs (ads and main content)"
+						  ]
+}
