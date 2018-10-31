@@ -201,8 +201,8 @@ mVid.start = function (channel) {
         }
         return "";
     }
-
-    var currentChannel = commonUtils.getUrlVars()["test"] || getCookie("channel");
+	this.testCase = channel;
+    var currentChannel = channel;
     
     window.getPlaylist(currentChannel || "0", this.Log, function(ch, playObj) {     
 
@@ -758,12 +758,29 @@ mVid.setSourceAndLoad = function (video, src, type) {
         
         // Running on a non hbbtv device?
         if (!this.hbbtv.app) {
-            this.Log.warn("*** USE DASHJS (non hbbtv device) ***");     
-            dashjs.MediaPlayerFactory.create(video, source);
+			this.Log.warn("testcase = " + this.testCase);
+			this.Log.warn("testcase last = " + this.testCase.substr(this.testCase.length-1,1));
+			if(this.testCase.substr(this.testCase.length-1,1) == "1"){
+				this.Log.warn("*** USE DASHJS (non hbbtv device) ***");     
+				dashjs.MediaPlayerFactory.create(video, source);
+			}
+			else{
+				this.Log.warn("*** USE HLSJS (non hbbtv device) ***");
+				video.removeChild(source);
+				if(Hls.isSupported()) {
+					var hls = new Hls();
+					hls.loadSource(src);
+					hls.attachMedia(video);
+					hls.on(Hls.Events.MANIFEST_PARSED,function() {
+					  video.load();
+					});
+					return;
+				}
+			}
         }
         //this.setPreload(video, "auto");
         video.load();
-    }
+	}
 };
 
 mVid.switchVideoToPlaying = function(freshVideo, previousVideo) {
@@ -1926,6 +1943,136 @@ mVid.testfunc101 = function(id){
     });
 	window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
 };
+
+mVid.testfunc102 = function(id){
+	var that 		= this;
+	
+	this.EOPlayback = false;
+	this.bAttemptStallRecovery = false;
+	this.showPlayrange();
+	
+	if (location.protocol === 'https:') {
+		this.tvui.ShowSecure(true);
+	}
+	this.testCase = id;
+	
+	window.getPlaylist(id || "0", this.Log, function(ch, playObj) {     
+
+        that.procPlaylist(ch, playObj);
+
+        
+        that.transitionThresholdMS  = AD_TRANS_THRESHOLD_MS;
+        that.bShowBufferingIcon     = false;
+                
+        that.showBufferingIcon(false);
+
+        document.addEventListener("keydown", that.OnKeyDown.bind(that));
+
+        
+        window.setInterval( function() {
+            that.updateAllBuffersStatus();  
+        }, 1000);
+
+        if (playObj.type === "video/broadcast") {
+
+            that.Log.info("*** Use Video Broadcast Object ***");
+
+            that.broadcast = window.SetupBroadcastObject("mVid-broadcast", "player-container", that.Log);
+            
+            if (that.broadcast) {
+                that.tvui.ShowTransportIcons(false);
+                
+                that.broadcast.bind();
+                
+                if (playObj.timeline && playObj.timeline.selector) {
+                    that.broadcast.initMediaSync(playObj.timeline.selector, 
+                        function() {
+                            that.tvui.ShowMSyncIcon("msyncicon");
+                        }, 
+                        function(err) {
+                            that.tvui.ShowMSyncIcon("nomsyncicon");
+                        }
+                    );
+                    if (that.params.bWindowedObjs) {
+                        that.broadcast.setWindow(that.windowVideoObjects["mVid-broadcast"]);
+                    }
+                    
+                    that.broadcast.contentDuration = playObj.contentDuration;
+                    that.broadcast.adsDuration = playObj.adsDuration;
+                    that.broadcast.cumulativeAdTransMS = 0;
+                    that.broadcast.previousTimeMS = 0;
+                    
+                    that.broadcast.fps = playObj.timeline.fps ? playObj.timeline.fps : CONTENT_FPS;
+                    
+                    that.broadcast.bSetupAdTransEvents = true;
+                    that.broadcast.bTimePlayTransition = false;
+                    that.broadcast.setTimeUpdateEvents(onMsyncTimeUpdate(that));
+                } else {
+                    that.Log.warn("MediaSync timeline not defined.");           
+                }
+            } else {
+                that.Log.error("Broadcast object init failed.");            
+            }
+            
+        } else {
+            that.resetStallTimer();
+        
+            var mainVideo = that.createVideo("mVid-mainContent");
+
+            that.cues = window.InitCues(
+                {
+                    log     : that.Log, 
+                    tvui    : that.tvui, 
+                    params  : that.params, 
+                    cfg     : that.hbbtv.cfg, 
+                    fGetCurrentPlayingVideo : that.getCurrentPlayingVideo.bind(that),
+                    fUpdateBufferStatus     : that.updateBufferStatus.bind(that),
+                    eventSchemeIdUri        : playObj.eventSchemeIdUri
+                }
+            );
+
+            if (!that.broadcast) {
+                that.tvui.ShowPlayingState("stop");
+            }
+            
+            // Clear key
+            const KEYSYSTEM_TYPE = "org.w3.clearkey";
+
+            var options = [];
+            const audioContentType = "audio/mp4; codecs=\"mp4a.40.2\""; 
+            const videoContentType = "video/mp4; codecs=\"avc3.4D4015\""; 
+
+            options = [
+                {
+                    initDataTypes: ["cenc"],
+                    videoCapabilities: [{contentType: videoContentType}],
+                    audioCapabilities: [{contentType: audioContentType}],
+                }
+            ];
+
+            if (typeof navigator.requestMediaKeySystemAccess !== "undefined") {
+                window.SetupEME(mainVideo, KEYSYSTEM_TYPE, "video", options, that.contentTag, that.Log).then(function(p) {
+                    that.Log.info(p);
+                    that.setContentSourceAndLoad(); 
+					var playingVideo = that.getCurrentPlayingVideo();
+					that.seek(playingVideo, 60);					
+                }, function(p) {
+                    that.Log.error(p);
+                });
+                that.bEMESupport = true;
+            } else {
+                that.setContentSourceAndLoad();
+				var playingVideo = that.getCurrentPlayingVideo();
+				that.seek(playingVideo, 60);
+                that.tvui.ShowEncrypted("noeme");
+                that.bEMESupport = false;
+            }		
+        }
+        
+    });
+	window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
+};
+ 
  
 mVid.menueSwitch = function(id, show){
 	if(show){
@@ -1992,6 +2139,10 @@ mVid.testcaseClick = function(){
 			switch(this.id){
 				case "t101":{
 				     mVid.testfunc101(this.id);
+					 break;
+				}
+				case "t102":{
+				     mVid.testfunc102(this.id);
 					 break;
 				}
 				default:
