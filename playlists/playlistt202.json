@@ -1,0 +1,12 @@
+{
+	"ads" 				: [],
+	"src" 				: "./hls/x36xhzz/x36xhzz.m3u8",
+	"type" 				: "application/x-hls",
+	"transitionTime" 	: "-1",
+	"addContentId" 		: "false",
+	"channelName" 		: "起播速度 playback - TS",
+
+	"info"				: [	"hls (Main Content):",
+							"  - Content duration 8m"
+						  ]
+}

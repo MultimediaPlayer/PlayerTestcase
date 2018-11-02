@@ -1,10 +1,10 @@
 {
 	"ads" 				: [],
-	"src" 				: "./content/mperiods/dashads-dartest-ck-subs.mpd",
+	"src" 				: "./content/da541050/_TESTSUITE/TESTS/org.hbbtv_DA541050/DA541050.mpd",
 	"type" 				: "application/dash+xml",
 	"transitionTime" 	: "-1",
 	"addContentId" 		: "false",
-	"channelName" 		: "起播速度 - dash",
+	"channelName" 		: "Bookmark playback - dash",
 
 	"info"				: [	"Static Manifest (Adverts and Main Content):",
 							"  - Content duration 60m",
