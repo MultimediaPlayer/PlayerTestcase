@@ -55,12 +55,19 @@ div.safe_area
 	display: none;
 	background-color: transparent;
 }
+.info_area {
+	position: absolute;
+	/* Border of the safe area: 10% 5% 80% 90 */ 
+	left: 70%; top: 40%;
+	background-color: #000000;
+	z-index:99;
+}
 .menue_area {
 	position: absolute;
 	/* Border of the safe area: 10% 5% 80% 90 */ 
 	left: 64px; top: 36px; width: 1024px; height: 648px;
 	background-color: #fcfcfc;
-	z-index:99;
+	z-index:98;
 }
 .testcase{
 	text-align:center;
