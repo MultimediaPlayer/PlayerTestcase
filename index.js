@@ -502,6 +502,7 @@ expressSrv.get("/index.html", function(req, res) {
         res.send("Sorry, another device is already attached.  Please disconnect it and try again.");
     }
 });
+//监听get testlist.html
 expressSrv.get('/testlist.html', function(req, res) {
 	var UA = req.headers['user-agent'];
 	
@@ -512,7 +513,7 @@ expressSrv.get('/testlist.html', function(req, res) {
 		logger.debug("   UA: " + UA);
 		
 		//createWindows();
-		
+		//刷新服务端界面
 		win['log'].reload();
 		win['allvideoobjs'].reload();
 		win['mainvideoobj'].reload();
@@ -522,7 +523,7 @@ expressSrv.get('/testlist.html', function(req, res) {
 		
 		var v = generalInfo.version;
 		var sRelType = v.dev == "true" ? "dev" : "";
-		
+		//通过testlist.hbs模板来渲染testlist.html
 		res.render('testlist.hbs', 
 			{
 				version: "v" + generalInfo.version.major + "." + generalInfo.version.minor + sRelType,
@@ -531,6 +532,7 @@ expressSrv.get('/testlist.html', function(req, res) {
 			}, 
 			function(err, html) { 
 			res.status(200);
+			// 发送给客户端
 			res.send(html);
 			logger.trace("UserAgent: " + req.headers['user-agent']);
 			logger.trace(JSON.stringify(req.headers));
@@ -749,7 +751,7 @@ expressSrv.get("/content/*", function(req, res) {
 
                 logger.trace(" - send chunk");
                 var nThrot = commonConfig.getNetworkThrottle();
-
+				logger.info(" - send chunk :" + nThrot.value + "  ---- " + nThrot.name);
                 if (nThrot.value !== 0) {
                     stream.pipe(new Throttle({rate: nThrot.value * (1024 * 1024) / 8, chunksize: 2048 * 1024})).pipe(res);
                     logger.info("Throttle server: " + nThrot.name);
@@ -1809,9 +1811,13 @@ expressSrv.post("/getkeys", function(req, res) {
 
 expressSrv.post('/testcase', function(req, res) {
 	var info = req.body;
-	
-	logger.info("testcase result: " + JSON.stringify(info));
 	logger.info(" - url: " + req.path);
+	logger.info("testcase result: " + JSON.stringify(info));
+	logger.info("testcase id: " + info[0].id);
+	if(info[0].id == "t301"){
+		logger.info("--Throttle  network to  " + info[0].value);
+		commonConfig.setNetworkThrottleByName(info[0].value);
+	}
 });
 
 function sendConnectionStatus() {
