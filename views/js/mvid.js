@@ -97,6 +97,7 @@ mVid.sendResult = function(msg){
 	var ResultServiceUrl = "./testcase";
 	mVid.Log.info("TESTCASE :sendResult : " + JSON.stringify(msg));
 	
+	//post的respond callback，可能会以后会有收到result，服务端respond，客户端处理的场景
 	function callback(json, xhr) {
 		try {
 			mVid.Log.info(json);
@@ -110,10 +111,12 @@ mVid.sendResult = function(msg){
 		try {
 			var x = new (this.XMLHttpRequest || ActiveXObject)('MSXML2.XMLHTTP.3.0');
 			x.open('POST', ResultServiceUrl, 1);
+			//设置成json
 			x.setRequestHeader('Content-type', 'application/json');
 			x.onreadystatechange = function() {
 				x.readyState > 3 && callback && callback(x.responseText, x);
 			};
+			//send
 			x.send(JSON.stringify(msg));
 		} catch (e) {
 			mVid.Log.error(e);
@@ -1350,10 +1353,13 @@ function onVideoEvent (m) {
 				var gap = endTime - m.startPlayTime;
 				m.Log.info(m.testCase+"(" + this.id + ")"+ ": (PLAYING)time：" + gap + "ms");
 				mVid.calTime = false;
-				var jsongap = [];
-				var row = {};
+				var jsongap = [];//创建数组
+				var row = {};//创建json对象
 				row.id = m.testCase;
 				row.value = gap;
+				//第二个json对象
+				//var row2 = {};
+				//jsongap.push(row2);
 				jsongap.push(row);
 				m.sendResult(jsongap);
 				m.appendViewInfo("time : " + gap + "ms");
@@ -1784,7 +1790,9 @@ mVid.clearViewInfo = function(){
 mVid.OnCheckResult = function(){
 	var vid = this.getCurrentPlayingVideo();
 	this.Log.info("OnCheckResult id = " + this.testCase );
+	//判断类别
 	if(this.testCase == "t101"|| this.testCase == "t102"){
+		//判断播放器状态以及pts
 		if(vid.networkState == 2 && vid.currentTime > 60){
 			var jsongap = [];
 			var row = {};
@@ -2038,13 +2046,20 @@ mVid.playHLS = function(id, time){
 	window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
 };
 mVid.testfunc101 = function(id){
+	//在页面显示提示信息
 	this.appendViewInfo("step1 : start play");
+	//从头播放dash
 	this.playDASH(id, 0);
+	//setTimeout(func, time)
+	//延时time（ms）执行func
 	window.setTimeout(function(){	
 		var playingVideo = this.getCurrentPlayingVideo();
+		//获取正在播放的video的pts
 		var time = playingVideo.currentTime;
+		//停止播放当前video
 		this.setEOPlayback();
 		this.appendViewInfo("step2 : stop playing at " + time);
+		//从get的pts开始书签播放
 		this.playDASH(id, time);
 		this.appendViewInfo("step3 : bookmark play at " + time);
 	}.bind(this), 62*1000);
@@ -2108,13 +2123,35 @@ mVid.testfunc202 = function(id){
 		window.setTimeout(function(){
 			this.setEOPlayback();
 			this.calTime = true;
-			var myDate = new Date();
+			var myDate = new Date(); 
 			this.startPlayTime = myDate.getTime();	
 			this.playHLS(id, 60);
 			this.Log.info(id +" bookmark play start time " + this.startPlayTime);
 		}.bind(this), 20 * 1000);
 	}.bind(this), 20 * 1000);
 }; 
+mVid.testfunc301 = function(id){
+	this.Log.info(id +" play start time " + this.startPlayTime);
+	this.playDASH(id, 0);
+	window.setTimeout(function(){
+		var json = [];
+		var row = {};
+		row.id = id;
+		row.value = "1mbps";
+		json.push(row);
+		this.sendResult(json);
+		window.setTimeout(function(){
+			var json = [];
+			var row = {};
+			row.id = id;
+			row.value = "None";
+			json.push(row);
+			this.sendResult(json);
+		}.bind(this), 50 * 1000);
+	}.bind(this), 50 * 1000);
+	
+	
+}
  
 mVid.menueSwitch = function(id, show){
 	if(show){
@@ -2223,16 +2260,17 @@ mVid.testFunc = function(id){
 	}
 }
 
-
+//加载testcase list
 mVid.menueload = function (){
 	function getCallback(testlistObj){
 		testList = JSON.parse(testlistObj);
 		mVid.menueSwitch(0,true);
 	}
+	//testlist.js中加载/playlists/testlist.json中的testcase信息
 	window.getTestlist(getCallback);
 }
 
-
+//testcase list点击事件监听函数
 mVid.testcaseClick = function(){
 	if(this.id.length < 3){
 		mVid.menueSwitch(this.id ,true);
@@ -2249,6 +2287,7 @@ mVid.testcaseClick = function(){
 // ---------------------------------------------------------------------- //
 // ---------------------------------------------------------------------- //
 // ---------------------------------------------------------------------- //
+//页面加载时便会调用此函数
 window.onload = function () {
 	mVid.init();
 	mVid.menueload();
