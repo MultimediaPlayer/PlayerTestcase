@@ -1797,13 +1797,21 @@ mVid.OnCheckResult = function(){
 			var jsongap = [];
 			var row = {};
 			row.id = this.testCase;
-			row.result = "success"
+			row.value = "success"
 			jsongap.push(row);
 			this.sendResult(jsongap);
+			this.appendViewInfo("Result : success");
 			this.Log.info(" OnCheckResult " + this.testCase + " success ,network:" + vid.networkState + " ,time:" + vid.currentTime);
 		}
 		else {
-			this.Log.info(" OnCheckResult " + this.testCase + " success ,network:" + vid.networkState + " ,time:" + vid.currentTime);
+			var jsongap = [];
+			var row = {};
+			row.id = this.testCase;
+			row.value = "fail"
+			jsongap.push(row);
+			this.sendResult(jsongap);
+			this.appendViewInfo("Result : fail");
+			this.Log.info(" OnCheckResult " + this.testCase + " fail ,network:" + vid.networkState + " ,time:" + vid.currentTime);
 		}
 	}
 };
@@ -1938,7 +1946,7 @@ mVid.playDASH = function(id, time){
         }
         
     });
-	window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
+	
 };
 
 mVid.playHLS = function(id, time){
@@ -2043,7 +2051,6 @@ mVid.playHLS = function(id, time){
         }
         
     });
-	window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
 };
 mVid.testfunc101 = function(id){
 	//在页面显示提示信息
@@ -2061,22 +2068,24 @@ mVid.testfunc101 = function(id){
 		this.appendViewInfo("step2 : stop playing at " + time);
 		//从get的pts开始书签播放
 		this.playDASH(id, time);
+		window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
 		this.appendViewInfo("step3 : bookmark play at " + time);
 	}.bind(this), 62*1000);
 };
 mVid.testfunc102 = function(id){
 	this.appendViewInfo("step1 : start play");
 	this.playDASH(id, 0);
-	window.setTimeout(function(){	
+	window.setTimeout(function(){
 		var playingVideo = this.getCurrentPlayingVideo();
-		var time = playingVideo.currentTime;
+		var time = playingVideo.currentTime;	
 		this.setEOPlayback();
 		this.appendViewInfo("step2 : stop playing at " + time);
 		this.playHLS(id, time);
+		window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
 		this.appendViewInfo("step3 : bookmark play at " + time);
 	}.bind(this), 62*1000);
 };	
-mVid.testfunc201 = function(id){
+mVid.testfunc201 = function(id){ 
 	this.calTime = true;
 	var myDate = new Date();
 	this.startPlayTime = myDate.getTime();
