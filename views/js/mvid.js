@@ -2272,7 +2272,7 @@ mVid.menueload = function (){
 
 //testcase list点击事件监听函数
 mVid.testcaseClick = function(){
-	if(this.id.length < 3){
+	if(this.id.length < 4){
 		mVid.menueSwitch(this.id ,true);
 	}else{
 		if(this.id === "back")
