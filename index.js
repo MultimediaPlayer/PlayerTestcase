@@ -22,6 +22,7 @@ const argv = require("minimist")(process.argv.slice(2));
 var GUI         = null;
 var guiWindow   = null;
 var guiIPC      = null;
+var disConnect = false;
 
 if (!argv.headless && !argv.multidevs) {
     GUI         = electron.app;
@@ -568,7 +569,9 @@ expressSrv.get("/favicon.ico", function(req, res) {
 var mp4box = new mp4boxModule.MP4Box();
 
 expressSrv.get("/content/*", function(req, res) {
-
+	if(disConnect){
+		return;
+	}
     var suffix = req.path.split(".").pop();
     var cType;
 
@@ -751,7 +754,7 @@ expressSrv.get("/content/*", function(req, res) {
 
                 logger.trace(" - send chunk");
                 var nThrot = commonConfig.getNetworkThrottle();
-				logger.info(" - send chunk :" + nThrot.value + "  ---- " + nThrot.name);
+
                 if (nThrot.value !== 0) {
                     stream.pipe(new Throttle({rate: nThrot.value * (1024 * 1024) / 8, chunksize: 2048 * 1024})).pipe(res);
                     logger.info("Throttle server: " + nThrot.name);
@@ -832,7 +835,6 @@ expressSrv.get('/hls/*', function(req, res) {
 			logger.error(" * error in file request: " + file);
 			return res.sendStatus(400);
 		}
-		logger.debug(req.headers);
 		
 		var range = req.headers.range;
 
@@ -1814,9 +1816,19 @@ expressSrv.post('/testcase', function(req, res) {
 	logger.info(" - url: " + req.path);
 	logger.info("testcase result: " + JSON.stringify(info));
 	logger.info("testcase id: " + info[0].id);
-	if(info[0].id == "t301"){
+	if(info[0].id == "t301" || info[0].id == "t302"){
 		logger.info("--Throttle  network to  " + info[0].value);
 		commonConfig.setNetworkThrottleByName(info[0].value);
+	}
+	if(info[0].id == "t1001" || info[0].id == "t1002"){
+		if(info[0].value == "disconnect"){
+			disConnect = true;
+		}else if(info[0].value == "reconnect"){
+			disConnect = false;
+		}else{
+			logger.info("--Throttle  network to  " + info[0].value);
+			commonConfig.setNetworkThrottleByName(info[0].value);
+		}
 	}
 });
 
