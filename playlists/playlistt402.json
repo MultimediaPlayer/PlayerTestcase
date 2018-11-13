@@ -4,7 +4,7 @@
 	"type" 				: "application/x-hls",
 	"transitionTime" 	: "-1",
 	"addContentId" 		: "false",
-	"channelName" 		: "Bookmark playback - HLS",
+	"channelName" 		: "seek - HLS",
 
 	"info"				: [	"hls (Main Content):",
 							"  - Content duration 8m"

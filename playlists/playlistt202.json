@@ -4,7 +4,7 @@
 	"type" 				: "application/x-hls",
 	"transitionTime" 	: "-1",
 	"addContentId" 		: "false",
-	"channelName" 		: "起播速度 playback - TS",
+	"channelName" 		: "起播速度 playback - HLS",
 
 	"info"				: [	"hls (Main Content):",
 							"  - Content duration 8m"
