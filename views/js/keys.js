@@ -10,7 +10,7 @@
 
 window.InitVKKeys = function() {
     var lVKTable = {};
-
+	lVKTable["VK_OK"]           = 13;
     lVKTable["VK_LEFT"]			= 37;
     lVKTable["VK_UP"]			= 38;
     lVKTable["VK_RIGHT"]		= 39;

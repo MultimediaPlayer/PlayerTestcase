@@ -92,70 +92,7 @@ mVid.windowVideoObjects = {
 
 mVid.startTime = Date.now();
 
-mVid.sendResult = function(msg){
-	
-	var ResultServiceUrl = "./testcase";
-	mVid.Log.info("TESTCASE :sendResult : " + JSON.stringify(msg));
-	
-	//post的respond callback，可能会以后会有收到result，服务端respond，客户端处理的场景
-	function callback(json, xhr) {
-		try {
-			mVid.Log.info(json);
-			
-		} catch(e) {
-			mVid.Log.error(e);			
-		}
-	}
-	
-	function ajax() {
-		try {
-			var x = new (this.XMLHttpRequest || ActiveXObject)('MSXML2.XMLHTTP.3.0');
-			x.open('POST', ResultServiceUrl, 1);
-			//设置成json
-			x.setRequestHeader('Content-type', 'application/json');
-			x.onreadystatechange = function() {
-				x.readyState > 3 && callback && callback(x.responseText, x);
-			};
-			//send
-			x.send(JSON.stringify(msg));
-		} catch (e) {
-			mVid.Log.error(e);
-		}
-	};
 
-	ajax();
-}
-
-mVid.init = function (channel) {
-	var that 		= this;
-	
-	
-	this.tvui		= window.InitTVUI();
-	
-	this.srvComms 	= window.InitServerComms(GLOBAL_SERVERGUI);
-	this.Log 		= window.InitLog(this.srvComms);
-	
-	this.Log.info("app loaded");
-
-	this.Log.info("GLOBAL_SERVERGUI: " + GLOBAL_SERVERGUI);
-
-	// Parse query params
-	this.params = [];
-	
-	this.params.overrideSubs 	= commonUtils.getUrlVars()["subs"] || "";
-	this.params.bCheckResume 	= commonUtils.getUrlVars()["checkresume"] || false;
-	this.params.bWindowedObjs	= commonUtils.getUrlVars()["win"] || false; 
-	this.params.bEventsDump		= commonUtils.getUrlVars()["eventdump"] || false;
-	this.params.bPartialSCTE	= commonUtils.getUrlVars()["partialscte"] || false;
-
-	this.hbbtv = window.InitHBBTVApp(this.Log);
-	
-	that.transitionThresholdMS 	= AD_TRANS_THRESHOLD_MS;
-	that.bShowBufferingIcon		= false;
-
-	document.addEventListener("keydown", that.OnKeyDown.bind(that));
-	
-};
 
 mVid.start = function (channel) {
 	var that 		= this;
@@ -216,8 +153,8 @@ mVid.start = function (channel) {
         that.bShowBufferingIcon     = false;
                 
         that.showBufferingIcon(false);
-
-        document.addEventListener("keydown", that.OnKeyDown.bind(that));
+		document.removeEventListener("keydown", that.OnMenueKeyDown);
+        document.addEventListener("keydown", that.OnKeyDown);
 
         
         window.setInterval( function() {
@@ -815,7 +752,7 @@ mVid.switchVideoToPlaying = function(freshVideo, previousVideo) {
 
     // Start playback of the pre-fetched media, using the play() function.
     if (freshVideo) {
-        freshVideo.playbackRate = 1;
+        //freshVideo.playbackRate = 1;
         freshVideo.play();
     }
     
@@ -1502,7 +1439,7 @@ mVid.OnKeyDown = function (e) {
     var keyChar = String.fromCharCode(keyCode);
     var keyTableEntry = null;
     
-    this.Log.info("KeyChar: " + keyChar);
+    mVid.Log.info("KeyChar: " + keyChar);
 
     keyTableEntry = keyTable.entries.filter(function ( obj ) {
         return obj.key === keyChar;
@@ -1515,11 +1452,11 @@ mVid.OnKeyDown = function (e) {
     }
     
     if (keyTableEntry && keyTableEntry.func) { 
-        keyTableEntry.func.bind(this)(); 
+        keyTableEntry.func.bind(mVid)(); 
     }   
 };
 
-mVid.cmndFastForward = function () {
+mVid.cmndFastForward = function (speed) {
     var playingVideo = this.getCurrentPlayingVideo();
     
     if (this.broadcast) {
@@ -1532,11 +1469,11 @@ mVid.cmndFastForward = function () {
     
     this.Log.info("called : cmndFastForward"); 
 
-    if (playingVideo) playingVideo.playbackRate = 4;    
+    if (playingVideo) playingVideo.playbackRate = speed;    
     this.tvui.ShowPlayingState("ffwd");
 };  
     
-mVid.cmndRewind = function () {
+mVid.cmndRewind = function (speed) {
     var playingVideo = this.getCurrentPlayingVideo();
 
     if (this.broadcast) {
@@ -1549,7 +1486,7 @@ mVid.cmndRewind = function () {
     
     this.Log.info("called : cmndRewind"); 
     
-    if (playingVideo) playingVideo.playbackRate = -4;   
+    if (playingVideo) playingVideo.playbackRate = speed;   
     this.tvui.ShowPlayingState("rewind");
 };  
     
@@ -1757,18 +1694,7 @@ keyTable.entries = [
     { func : mVid.cmndReload,       key : "L", hbbKey : getKey("VK_RED")             }, 
     { func : mVid.cmndLog,          key : "D", hbbKey : getKey("VK_GREEN")           }, 
     { func : mVid.cmndJumpToStart,  key : "S", hbbKey : getKey("VK_YELLOW")          }, 
-    { func : mVid.cmndJumpToEnd,    key : "E", hbbKey : getKey("VK_BLUE")            }, 
-    
-    { func : function() {this.setChannel(0);},  key : "0",  hbbKey : getKey("VK_0")  }, 
-    { func : function() {this.setChannel(1);},  key : "1",  hbbKey : getKey("VK_1")  }, 
-    { func : function() {this.setChannel(2);},  key : "2",  hbbKey : getKey("VK_2")  }, 
-    { func : function() {this.setChannel(3);},  key : "3",  hbbKey : getKey("VK_3")  }, 
-    { func : function() {this.setChannel(4);},  key : "4",  hbbKey : getKey("VK_4")  }, 
-    { func : function() {this.setChannel(5);},  key : "5",  hbbKey : getKey("VK_5")  }, 
-    { func : function() {this.setChannel(6);},  key : "6",  hbbKey : getKey("VK_6")  }, 
-    { func : function() {this.setChannel(7);},  key : "7",  hbbKey : getKey("VK_7")  }, 
-    { func : function() {this.setChannel(8);},  key : "8",  hbbKey : getKey("VK_8")  }, 
-    { func : function() {this.setChannel(9);},  key : "9",  hbbKey : getKey("VK_9")  } 
+    { func : mVid.cmndJumpToEnd,    key : "E", hbbKey : getKey("VK_BLUE")            }
 ];
 
 mVid.appendViewInfo = function(str){
@@ -1797,7 +1723,7 @@ mVid.OnCheckResult = function(){
 			var jsongap = [];
 			var row = {};
 			row.id = this.testCase;
-			row.value = "success"
+			row.value = "success";
 			jsongap.push(row);
 			this.sendResult(jsongap);
 			this.appendViewInfo("Result : success");
@@ -1809,6 +1735,33 @@ mVid.OnCheckResult = function(){
 			row.id = this.testCase;
 			row.value = "fail"
 			jsongap.push(row);
+			this.sendResult(jsongap);
+			this.appendViewInfo("Result : fail");
+			this.Log.info(" OnCheckResult " + this.testCase + " fail ,network:" + vid.networkState + " ,time:" + vid.currentTime);
+		}
+	}
+	if(this.testCase == "t401"|| this.testCase == "t402"){
+		if(vid.networkState == 2 && Math.abs(vid.currentTime - this.seekTime) < 5){
+			var jsongap = [];
+			var row = {};
+			row.id = this.testCase;
+			row.value = "success";
+			var row2 = {};
+			row2.id = this.testCase;
+			row2.value = this.seekTime;
+			jsongap.push(row2);
+			this.sendResult(jsongap);
+			this.appendViewInfo("Result : success");
+			this.Log.info(" OnCheckResult " + this.testCase + " success ,network:" + vid.networkState + " ,time:" + vid.currentTime);
+		}else{
+			var jsongap = [];
+			var row = {};
+			row.id = this.testCase;
+			row.value = "fail";
+			var row2 = {};
+			row2.id = this.testCase;
+			row2.value = this.seekTime;
+			jsongap.push(row2);
 			this.sendResult(jsongap);
 			this.appendViewInfo("Result : fail");
 			this.Log.info(" OnCheckResult " + this.testCase + " fail ,network:" + vid.networkState + " ,time:" + vid.currentTime);
@@ -1837,8 +1790,8 @@ mVid.playDASH = function(id, time){
         that.bShowBufferingIcon     = false;
                 
         that.showBufferingIcon(false);
-
-        document.addEventListener("keydown", that.OnKeyDown.bind(that));
+		document.removeEventListener("keydown", that.OnMenueKeyDown);
+        document.addEventListener("keydown", that.OnKeyDown);
 
         
         window.setInterval( function() {
@@ -1970,8 +1923,8 @@ mVid.playHLS = function(id, time){
         that.bShowBufferingIcon     = false;
                 
         that.showBufferingIcon(false);
-
-        document.addEventListener("keydown", that.OnKeyDown.bind(that));
+		document.removeEventListener("keydown", that.OnMenueKeyDown);
+        document.addEventListener("keydown", that.OnKeyDown);
 
         
         window.setInterval( function() {
@@ -2121,27 +2074,41 @@ mVid.testfunc202 = function(id){
 	var myDate = new Date();
 	this.startPlayTime = myDate.getTime();
 	this.Log.info(id +" play start time " + this.startPlayTime);
+	this.appendViewInfo("step1 : start play");
 	this.playHLS(id, 0);
 	window.setTimeout(function(){
+		var time  = 75;
+		this.appendViewInfo("step2 : seek to " + time);
 		this.calTime = true;
 		var myDate = new Date();
 		this.startPlayTime = myDate.getTime();
 		var playingVideo = this.getCurrentPlayingVideo();
-	    this.seek(playingVideo, 60);
+	    this.seek(playingVideo, time);
 		this.Log.info(id +" seek start time " + this.startPlayTime);
 		window.setTimeout(function(){
+			var playingVideo = this.getCurrentPlayingVideo();
+			time = playingVideo.currentTime;
 			this.setEOPlayback();
 			this.calTime = true;
 			var myDate = new Date(); 
 			this.startPlayTime = myDate.getTime();	
-			this.playHLS(id, 60);
+			this.playHLS(id, time);
 			this.Log.info(id +" bookmark play start time " + this.startPlayTime);
+			this.appendViewInfo("step4 : bookmark play start at " + time);
 		}.bind(this), 20 * 1000);
 	}.bind(this), 20 * 1000);
 }; 
+
 mVid.testfunc301 = function(id){
 	this.Log.info(id +" play start time " + this.startPlayTime);
+	var json = [];
+	var row = {};
+	row.id = id;
+	row.value = "None";
+	json.push(row);
+	this.sendResult(json);
 	this.playDASH(id, 0);
+	this.appendViewInfo("step1 : start play");
 	window.setTimeout(function(){
 		var json = [];
 		var row = {};
@@ -2149,20 +2116,332 @@ mVid.testfunc301 = function(id){
 		row.value = "1mbps";
 		json.push(row);
 		this.sendResult(json);
+		this.appendViewInfo("step2 : Throttle network to 1mbps");
 		window.setTimeout(function(){
 			var json = [];
 			var row = {};
 			row.id = id;
-			row.value = "None";
+			row.value = "2mbps";
 			json.push(row);
 			this.sendResult(json);
-		}.bind(this), 50 * 1000);
-	}.bind(this), 50 * 1000);
-	
-	
+			this.appendViewInfo("step2 : Throttle network to 2mbps");
+			window.setTimeout(function(){
+				var json = [];
+				var row = {};
+				row.id = id;
+				row.value = "4mbps";
+				json.push(row);
+				this.sendResult(json);
+				this.appendViewInfo("step2 : Throttle network to 4mbps");
+				window.setTimeout(function(){
+					var json = [];
+					var row = {};
+					row.id = id;
+					row.value = "8mbps";
+					json.push(row);
+					this.sendResult(json);
+					this.appendViewInfo("step2 : Throttle network to 8mbps");
+				}.bind(this), 30 * 1000);
+			}.bind(this), 30 * 1000);
+		}.bind(this), 30 * 1000);
+	}.bind(this), 30 * 1000);
 }
+
+mVid.testfunc302 = function(id){
+	this.Log.info(id +" play start time " + this.startPlayTime);
+	var json = [];
+	var row = {};
+	row.id = id;
+	row.value = "None";
+	json.push(row);
+	this.sendResult(json);
+	this.playHLS(id, 0);
+	this.appendViewInfo("step1 : start play");
+	window.setTimeout(function(){
+		var json = [];
+		var row = {};
+		row.id = id;
+		row.value = "1mbps";
+		json.push(row);
+		this.sendResult(json);
+		this.appendViewInfo("step2 : Throttle network to 1mbps");
+		window.setTimeout(function(){
+			var json = [];
+			var row = {};
+			row.id = id;
+			row.value = "2mbps";
+			json.push(row);
+			this.sendResult(json);
+			this.appendViewInfo("step2 : Throttle network to 2mbps");
+			window.setTimeout(function(){
+				var json = [];
+				var row = {};
+				row.id = id;
+				row.value = "4mbps";
+				json.push(row);
+				this.sendResult(json);
+				this.appendViewInfo("step2 : Throttle network to 4mbps");
+				window.setTimeout(function(){
+					var json = [];
+					var row = {};
+					row.id = id;
+					row.value = "8mbps";
+					json.push(row);
+					this.sendResult(json);
+					this.appendViewInfo("step2 : Throttle network to 8mbps");
+				}.bind(this), 30 * 1000);
+			}.bind(this), 30 * 1000);
+		}.bind(this), 30 * 1000);
+	}.bind(this), 30 * 1000);
+}
+	
+mVid.testfunc401 = function(id){
+	this.Log.info(id +" play start time " + this.startPlayTime);
+	this.seekTime = 0;
+	this.playDASH(id, 0);
+	this.appendViewInfo("step1 : start play");
+	window.setTimeout(function(){		
+		var playingVideo = this.getCurrentPlayingVideo();	
+		this.seekTime = playingVideo.duration * 0.1;		
+	    this.seek(playingVideo, this.seekTime);
+		this.appendViewInfo("step2 : seek to " + this.seekTime);	
+		window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);	
+		window.setTimeout(function(){
+			var playingVideo = this.getCurrentPlayingVideo();	
+			this.seekTime = playingVideo.duration * 0.2;				
+			this.seek(playingVideo, this.seekTime); 
+			this.appendViewInfo("step2 : seek to " + this.seekTime);
+			window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
+			window.setTimeout(function(){	
+				var playingVideo = this.getCurrentPlayingVideo();
+				this.seekTime = playingVideo.duration * 0.9;					
+				this.seek(playingVideo, this.seekTime);
+				this.appendViewInfo("step2 : seek to " + this.seekTime);
+				window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
+				window.setTimeout(function(){
+					var playingVideo = this.getCurrentPlayingVideo();
+					this.seekTime = 0;					
+					this.seek(playingVideo, this.seekTime);
+					this.appendViewInfo("step2 : seek to " + this.seekTime);					
+					window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
+				}.bind(this), 20 * 1000);				
+			}.bind(this), 20 * 1000);
+		}.bind(this), 20 * 1000);
+	}.bind(this), 20 * 1000);
+}
+
+mVid.testfunc402 = function(id){
+	this.Log.info(id +" play start time " + this.startPlayTime);
+	this.seekTime = 0;
+	this.playHLS(id, 0);
+	this.appendViewInfo("step1 : start play");
+	window.setTimeout(function(){		
+		var playingVideo = this.getCurrentPlayingVideo();	
+		this.seekTime = playingVideo.duration * 0.1;		
+	    this.seek(playingVideo, this.seekTime);
+		this.appendViewInfo("step2 : seek to " + this.seekTime);	
+		window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);	
+		window.setTimeout(function(){
+			var playingVideo = this.getCurrentPlayingVideo();	
+			this.seekTime = playingVideo.duration * 0.2;				
+			this.seek(playingVideo, this.seekTime); 
+			this.appendViewInfo("step3 : seek to " + this.seekTime);
+			window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
+			window.setTimeout(function(){	
+				var playingVideo = this.getCurrentPlayingVideo();
+				this.seekTime = playingVideo.duration * 0.9;					
+				this.seek(playingVideo, this.seekTime);
+				this.appendViewInfo("step4 : seek to " + this.seekTime);
+				window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
+				window.setTimeout(function(){
+					var playingVideo = this.getCurrentPlayingVideo();
+					this.seekTime = 0;					
+					this.seek(playingVideo, this.seekTime);
+					this.appendViewInfo("step5 : seek to " + this.seekTime);					
+					window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
+				}.bind(this), 20 * 1000);				
+			}.bind(this), 20 * 1000);
+		}.bind(this), 20 * 1000);
+	}.bind(this), 20 * 1000);
+}
+
+mVid.testfunc501 = function(id){
+	this.Log.info(id +" play start time " + this.startPlayTime);
+	this.seekTime = 0;
+	this.playDASH(id, 0);
+	this.appendViewInfo("step1 : start play");
+	window.setTimeout(function(){
+		this.cmndPause();
+		this.appendViewInfo("step2 : pause");
+		this.seekTime = 60;
+		this.appendViewInfo("step3 : seek to " + this.seekTime);
+		var playingVideo = this.getCurrentPlayingVideo();
+		this.seek(playingVideo, this.seekTime);
+		window.setTimeout(function(){
+			this.appendViewInfo("step4 : play");
+			this.cmndPlay();
+		}.bind(this), 10 * 1000);
+	}.bind(this), 20 * 1000);
+}
+
+mVid.testfunc601 = function(id){
+	this.Log.info(id +" play start time " + this.startPlayTime);
+	this.seekTime = 0;
+	this.playDASH(id, 0);
+	this.appendViewInfo("step1 : start play");
+	window.setTimeout(function(){
+		this.cmndFastForward(2);
+		this.appendViewInfo("step2 : fast forward 2x");
+		window.setTimeout(function(){	
+			this.cmndFastForward(4);
+			this.appendViewInfo("step3 : fast forward 4x");
+			window.setTimeout(function(){	
+				this.cmndFastForward(8);
+				this.appendViewInfo("step4 : fast forward 8x");
+				window.setTimeout(function(){	
+					this.cmndRewind(-2);
+					this.appendViewInfo("step5 : rewind  2x");
+					window.setTimeout(function(){	
+						this.cmndRewind(-4);
+						this.appendViewInfo("step6 : rewind  4x");
+					}.bind(this), 60 * 1000);
+				}.bind(this), 60 * 1000);
+			}.bind(this), 60 * 1000);
+		}.bind(this), 60 * 1000);
+	}.bind(this), 10 * 1000);
+}
+//multi audio track select
+ mVid.testfunc701 = function(id){
+	this.Log.info(id +" play start time " + this.startPlayTime);
+	this.seekTime = 0;
+	this.playDASH(id, 0);
+	this.appendViewInfo("step1 : start play");
+	var playingVideo = this.getCurrentPlayingVideo();
+	var activeVideoComponentsCollection = playingVideo.getCurrentActiveComponents(playingVideo.COMPONENT_TYPE_AUDIO);
+	
+	var allVideoComponents = playingVideo.getComponents(playingVideo.COMPONENT_TYPE_AUDIO);
+	//playingVideo.selectComponent(inactiveComponent);
+			
+ }
  
-mVid.menueSwitch = function(id, show){
+//multi video track select
+mVid.testfunc801 = function(id){
+	this.Log.info(id +" play start time " + this.startPlayTime);
+	this.seekTime = 0;
+	this.playDASH(id, 0);
+	this.appendViewInfo("step1 : start play");
+	var playingVideo = this.getCurrentPlayingVideo();
+	var activeVideoComponentsCollection = playingVideo.getCurrentActiveComponents(playingVideo.COMPONENT_TYPE_VIDEO);
+	
+	var allVideoComponents = playingVideo.getComponents(playingVideo.COMPONENT_TYPE_VIDEO);
+	//playingVideo.selectComponent(inactiveComponent);
+			
+ }
+ 
+// audio codes switch
+mVid.testfunc901 = function(id){
+	this.Log.info(id +" play start time " + this.startPlayTime);
+	this.seekTime = 0;
+	this.playDASH(id, 0);
+	this.appendViewInfo("step1 : start play");
+	
+			
+ }
+ 
+// 断网续播
+mVid.testfunc1001 = function(id){
+	this.Log.info(id +" play start time " + this.startPlayTime);
+	this.playDASH(id, 0);
+	this.appendViewInfo("step1 : start play");
+	
+	var json = [];
+	var row = {};
+	row.id = id;
+	row.value = "1mbps";
+	json.push(row);
+	this.sendResult(json);
+	this.appendViewInfo("step2 : Throttle network to 1mbps");
+	
+	window.setTimeout(function(){
+		var json = [];
+		var row = {};
+		row.id = id;
+		row.value = "disconnect";
+		json.push(row);
+		this.sendResult(json);
+		this.appendViewInfo("step2 : disconnect");
+		window.setTimeout(function(){
+			var json = [];
+			var row = {};
+			row.id = id;
+			row.value = "reconnect";
+			json.push(row);
+			this.sendResult(json);
+			this.appendViewInfo("step3 : reconnect");	
+		}.bind(this), 10 * 1000);
+	}.bind(this), 10 * 1000);
+			
+ }
+ 
+
+var keyCharTable = [
+	{str : "0", key : "0", hbbKey : getKey("VK_0")},
+	{str : "1", key : "1", hbbKey : getKey("VK_1")},
+	{str : "2", key : "2", hbbKey : getKey("VK_2")},
+	{str : "3", key : "3", hbbKey : getKey("VK_3")},
+	{str : "4", key : "4", hbbKey : getKey("VK_4")},
+	{str : "5", key : "5", hbbKey : getKey("VK_5")},
+	{str : "6", key : "6", hbbKey : getKey("VK_6")},
+	{str : "7", key : "7", hbbKey : getKey("VK_7")},
+	{str : "8", key : "8", hbbKey : getKey("VK_8")},
+	{str : "9", key : "9", hbbKey : getKey("VK_9")}
+];
+
+var keyRecord = "t";
+
+mVid.OnMenueKeyDown = function (ev) {
+    var keyCode = ev.which || ev.charCode || ev.keyCode;
+    var keyChar = String.fromCharCode(keyCode);
+    var keyCharTableEntry = null;
+    
+    mVid.Log.info("KeyChar: " + keyChar);
+	if(keyChar == "A" || keyCode == getKey("VK_RED")){
+		mVid.menueSwitch(0,false);
+		mVid.testall("t101");
+	}
+	if(keyChar == "K" || keyCode == getKey("VK_OK")){
+		mVid.Log.info("final keyRecord: " + keyRecord);
+		var item = e(keyRecord);
+		if(item){
+			if(keyRecord.length < 4){
+				mVid.menueSwitch(keyRecord ,true);
+			}else{				
+					mVid.menueSwitch(0,false);
+					mVid.testFunc(keyRecord);
+					keyRecord = "t";
+			}
+		}else{
+			keyRecord = "t";
+			mVid.menueSwitch(0 ,true);
+		}
+	}
+	else{
+		keyCharTableEntry = keyCharTable.filter(function ( obj ) {
+			return obj.key === keyChar;
+		})[0];  
+			
+		if (!keyCharTableEntry) { 
+			keyCharTableEntry = keyCharTable.filter(function ( obj ) {
+				return obj.hbbKey === keyCode;
+			})[0];  
+		}
+		if(keyCharTableEntry){
+			keyRecord += keyCharTableEntry.str;
+			mVid.Log.info("keyRecord: " + keyRecord);
+		}
+	}
+};
+ mVid.menueSwitch = function(id, show){
 	if(show){
 		var app = e("app_area");
 		app.style.display = "none";
@@ -2173,7 +2452,7 @@ mVid.menueSwitch = function(id, show){
 				innerhtml += "<div class=\"testcase\" id =\"";
 				innerhtml += testList.Class[i].id + "\">";
 				innerhtml += testList.Class[i].name;
-				innerhtml += "</div>";
+				innerhtml += "<\/div>";
 			}
 		}
 		else{
@@ -2293,6 +2572,65 @@ mVid.testcaseClick = function(){
 	}
 	
 };
+
+mVid.sendResult = function(msg){
+	
+	var ResultServiceUrl = "./testcase";
+	mVid.Log.info("TESTCASE :sendResult : " + JSON.stringify(msg));
+	
+	//post的respond callback，可能会以后会有收到result，服务端respond，客户端处理的场景
+	function callback(json, xhr) {
+		try {
+			mVid.Log.info(json);
+			
+		} catch(e) {
+			mVid.Log.error(e);			
+		}
+	}
+	
+	function ajax() {
+		try {
+			var x = new (this.XMLHttpRequest || ActiveXObject)('MSXML2.XMLHTTP.3.0');
+			x.open('POST', ResultServiceUrl, 1);
+			//设置成json
+			x.setRequestHeader('Content-type', 'application/json');
+			x.onreadystatechange = function() {
+				x.readyState > 3 && callback && callback(x.responseText, x);
+			};
+			//send
+			x.send(JSON.stringify(msg));
+		} catch (e) {
+			mVid.Log.error(e);
+		}
+	};
+
+	ajax();
+}
+
+mVid.init = function (channel) {
+	
+	this.tvui		= window.InitTVUI();
+	
+	this.srvComms 	= window.InitServerComms(GLOBAL_SERVERGUI);
+	this.Log 		= window.InitLog(this.srvComms);
+	
+	this.Log.info("app loaded");
+
+	this.Log.info("GLOBAL_SERVERGUI: " + GLOBAL_SERVERGUI);
+ // Parse query params
+    this.params = [];
+    
+    this.params.overrideSubs    = commonUtils.getUrlVars()["subs"] || "";
+    this.params.bCheckResume    = commonUtils.getUrlVars()["checkresume"] || false;
+    this.params.bWindowedObjs   = commonUtils.getUrlVars()["win"] || false; 
+    this.params.bEventsDump     = commonUtils.getUrlVars()["eventdump"] || false;
+    this.params.bPartialSCTE    = commonUtils.getUrlVars()["partialscte"] || false;
+	
+	this.hbbtv = window.InitHBBTVApp(this.Log);
+	document.addEventListener("keydown", mVid.OnMenueKeyDown);
+	
+};
+
 // ---------------------------------------------------------------------- //
 // ---------------------------------------------------------------------- //
 // ---------------------------------------------------------------------- //
