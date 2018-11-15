@@ -1811,25 +1811,46 @@ expressSrv.post("/getkeys", function(req, res) {
     }
 });
 
-expressSrv.post('/testcase', function(req, res) {
+var resultRecord = false;
+var resultA = [];
+
+expressSrv.post('/testcaseresult', function(req, res) {
 	var info = req.body;
 	logger.info(" - url: " + req.path);
 	logger.info("testcase result: " + JSON.stringify(info));
 	logger.info("testcase id: " + info[0].id);
-	if(info[0].id == "t301" || info[0].id == "t302"){
+	if(resultRecord){
+		resultA.push(info[0]);
+	}
+	res.send();
+});
+
+expressSrv.post('/testcasecommand', function(req, res) {
+	var info = req.body;
+	logger.info(" - url: " + req.path);
+	logger.info("testcase command: " + JSON.stringify(info));
+	if(info[0].category == "networkSpeed"){
 		logger.info("--Throttle  network to  " + info[0].value);
 		commonConfig.setNetworkThrottleByName(info[0].value);
 	}
-	if(info[0].id == "t1001" || info[0].id == "t1002"){
+	if(info[0].category == "netWorkConnect" ){
 		if(info[0].value == "disconnect"){
 			disConnect = true;
 		}else if(info[0].value == "reconnect"){
 			disConnect = false;
-		}else{
-			logger.info("--Throttle  network to  " + info[0].value);
-			commonConfig.setNetworkThrottleByName(info[0].value);
 		}
 	}
+	if(info[0].category == "resultReport" ){
+		if(info[0].value == "record"){
+			resultRecord = true;
+			resultA = [];
+		}else if(info[0].value == "report"){
+			resultRecord = false;
+			res.send(resultA);
+			resultA = [];
+		}
+	}
+	res.send();
 });
 
 function sendConnectionStatus() {
