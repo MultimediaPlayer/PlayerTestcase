@@ -6,11 +6,11 @@
 			"testcase" : [
 				{
 					"id" : "t101",
-					"name" : "001 书签播放 : DASH-MP4"
+					"name" : "01 书签播放 : DASH-MP4"
 				},
 				{
 					"id" : "t102",
-					"name" : "002 书签播放 : HLS-TS"
+					"name" : "02 书签播放 : HLS-TS"
 				}
 			]
 		},
@@ -20,11 +20,11 @@
 			"testcase" : [
 				{
 					"id" : "t201",
-					"name" : "001 起播速度 : DASH-MP4"
+					"name" : "01 起播速度 : DASH-MP4"
 				},
 				{
 					"id" : "t202",
-					"name" : "002 起播速度 : HLS-TS"
+					"name" : "02 起播速度 : HLS-TS"
 				}
 			]
 		},
@@ -34,11 +34,11 @@
 			"testcase" : [
 				{
 					"id" : "t301",
-					"name" : "001 自适应 : DASH-MP4"
+					"name" : "01 自适应 : DASH-MP4"
 				},
 				{
 					"id" : "t302",
-					"name" : "002 自适应 : HLS-TS"
+					"name" : "02 自适应 : HLS-TS"
 				}
 			]
 		},
@@ -48,11 +48,11 @@
 			"testcase" : [
 				{
 					"id" : "t401",
-					"name" : "001 SEEK : DASH-MP4"
+					"name" : "01 SEEK : DASH-MP4"
 				},
 				{
 					"id" : "t402",
-					"name" : "002 SEEK : HLS-TS"
+					"name" : "02 SEEK : HLS-TS"
 				}
 			]
 		},
@@ -62,11 +62,11 @@
 			"testcase" : [
 				{
 					"id" : "t501",
-					"name" : "001 暂停中SEEK : DASH-MP4"
+					"name" : "01 暂停中SEEK : DASH-MP4"
 				},
 				{
 					"id" : "t502",
-					"name" : "002 暂停中SEEK : HLS-TS"
+					"name" : "02 暂停中SEEK : HLS-TS"
 				}
 			]
 		},
@@ -76,11 +76,11 @@
 			"testcase" : [
 				{
 					"id" : "t601",
-					"name" : "001 快进快退 : DASH-MP4"
+					"name" : "01 快进快退 : DASH-MP4"
 				},
 				{
 					"id" : "t602",
-					"name" : "002 快进快退 : HLS-TS"
+					"name" : "02 快进快退 : HLS-TS"
 				}
 			]
 		},
@@ -90,11 +90,11 @@
 			"testcase" : [
 				{
 					"id" : "t701",
-					"name" : "001 multi audio track : DASH-MP4"
+					"name" : "01 multi audio track : DASH-MP4"
 				},
 				{
 					"id" : "t702",
-					"name" : "002 multi audio track : HLS-TS"
+					"name" : "02 multi audio track : HLS-TS"
 				}
 			]
 		},
@@ -104,11 +104,11 @@
 			"testcase" : [
 				{
 					"id" : "t801",
-					"name" : "001 multi video track : DASH-MP4"
+					"name" : "01 multi video track : DASH-MP4"
 				},
 				{
 					"id" : "t802",
-					"name" : "002 multi video track : HLS-TS"
+					"name" : "02 multi video track : HLS-TS"
 				}
 			]
 		},
@@ -118,11 +118,11 @@
 			"testcase" : [
 				{
 					"id" : "t901",
-					"name" : "001 audio codes switch : DASH-MP4"
+					"name" : "01 audio codes switch : DASH-MP4"
 				},
 				{
 					"id" : "t902",
-					"name" : "002 audio codes switch : HLS-TS"
+					"name" : "02 audio codes switch : HLS-TS"
 				}
 			]
 		},
@@ -132,11 +132,11 @@
 			"testcase" : [
 				{
 					"id" : "t1001",
-					"name" : "001 断网续播 : DASH-MP4"
+					"name" : "01 断网续播 : DASH-MP4"
 				},
 				{
 					"id" : "t1002",
-					"name" : "002 断网续播 : HLS-TS"
+					"name" : "02 断网续播 : HLS-TS"
 				}
 			]
 		},
@@ -146,11 +146,11 @@
 			"testcase" : [
 				{
 					"id" : "t1101",
-					"name" : "001 BASEURL切换 : DASH-MP4"
+					"name" : "01 BASEURL切换 : DASH-MP4"
 				},
 				{
 					"id" : "t1102",
-					"name" : "002 BASEURL切换 : HLS-TS"
+					"name" : "02 BASEURL切换 : HLS-TS"
 				}
 			]
 		},
