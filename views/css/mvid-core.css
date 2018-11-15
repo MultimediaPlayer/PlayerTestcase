@@ -62,6 +62,14 @@ div.safe_area
 	background-color: #000000;
 	z-index:99;
 }
+.result_area {
+	position: absolute;
+	/* Border of the safe area: 10% 5% 80% 90 */ 
+	left: 30%; top: 30%;
+	background-color: #000000;
+	z-index:99;
+	display:none;
+}
 .menue_area {
 	position: absolute;
 	/* Border of the safe area: 10% 5% 80% 90 */ 

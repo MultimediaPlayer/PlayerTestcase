@@ -695,6 +695,8 @@ mVid.setSourceAndLoad = function (video, src, type) {
         video.bBuffEnoughToPlay = false;
         video.bEncrypted = false;
         video.bPlayEventFired = false;
+		video.src = src;
+		this.Log.warn("testcase set source = " + src);
         
         // Running on a non hbbtv device?
         if (!this.hbbtv.app) {
@@ -1704,6 +1706,14 @@ mVid.appendViewInfo = function(str){
 	inhtml += "<p>" + str  +"<\/p>";
 	infoarea.innerHTML = inhtml;
 };
+mVid.appendResultInfo = function(str){
+	this.Log.info("append result: " + str);
+	var infoarea = e("result");
+	infoarea.style.display = "inline";	
+	var inhtml = infoarea.innerHTML;
+	inhtml += "<p>" + str  +"<\/p>";
+	infoarea.innerHTML = inhtml;
+};
 
 mVid.clearViewInfo = function(){
 	var infoarea = e("info");
@@ -1716,32 +1726,8 @@ mVid.clearViewInfo = function(){
 mVid.OnCheckResult = function(){
 	var vid = this.getCurrentPlayingVideo();
 	this.Log.info("OnCheckResult id = " + this.testCase );
-	//判断类别
-	if(this.testCase == "t101"|| this.testCase == "t102"){
-		//判断播放器状态以及pts
-		if(vid.networkState == 2 && vid.currentTime > 60){
-			var jsongap = [];
-			var row = {};
-			row.id = this.testCase;
-			row.value = "success";
-			jsongap.push(row);
-			this.sendResult(jsongap);
-			this.appendViewInfo("Result : success");
-			this.Log.info(" OnCheckResult " + this.testCase + " success ,network:" + vid.networkState + " ,time:" + vid.currentTime);
-		}
-		else {
-			var jsongap = [];
-			var row = {};
-			row.id = this.testCase;
-			row.value = "fail"
-			jsongap.push(row);
-			this.sendResult(jsongap);
-			this.appendViewInfo("Result : fail");
-			this.Log.info(" OnCheckResult " + this.testCase + " fail ,network:" + vid.networkState + " ,time:" + vid.currentTime);
-		}
-	}
-	if(this.testCase == "t401"|| this.testCase == "t402"){
-		if(vid.networkState == 2 && Math.abs(vid.currentTime - this.seekTime) < 5){
+	if(this.testCase != "t1001" && this.testCase == "t1002" ){
+		if((vid.networkState == 2 || vid.networkState == 1) && Math.abs(vid.currentTime - this.seekTime - 4) < 14){
 			var jsongap = [];
 			var row = {};
 			row.id = this.testCase;
@@ -1749,6 +1735,7 @@ mVid.OnCheckResult = function(){
 			var row2 = {};
 			row2.id = this.testCase;
 			row2.value = this.seekTime;
+			jsongap.push(row);
 			jsongap.push(row2);
 			this.sendResult(jsongap);
 			this.appendViewInfo("Result : success");
@@ -1761,10 +1748,31 @@ mVid.OnCheckResult = function(){
 			var row2 = {};
 			row2.id = this.testCase;
 			row2.value = this.seekTime;
+			jsongap.push(row);
 			jsongap.push(row2);
 			this.sendResult(jsongap);
 			this.appendViewInfo("Result : fail");
 			this.Log.info(" OnCheckResult " + this.testCase + " fail ,network:" + vid.networkState + " ,time:" + vid.currentTime);
+		}
+	}
+	else{
+		if( vid.networkState == 1){
+			var jsongap = [];
+			var row = {};
+			row.id = this.testCase;
+			row.value = "success";
+			jsongap.push(row);
+			this.sendResult(jsongap);
+			this.appendViewInfo("Result : success");
+		}
+		else{
+			var jsongap = [];
+			var row = {};
+			row.id = this.testCase;
+			row.value = "success";
+			jsongap.push(row);
+			this.sendResult(jsongap);
+			this.appendViewInfo("Result : fail");
 		}
 	}
 };
@@ -2015,14 +2023,14 @@ mVid.testfunc101 = function(id){
 	window.setTimeout(function(){	
 		var playingVideo = this.getCurrentPlayingVideo();
 		//获取正在播放的video的pts
-		var time = playingVideo.currentTime;
+		this.seekTime = playingVideo.currentTime;
 		//停止播放当前video
 		this.setEOPlayback();
-		this.appendViewInfo("step2 : stop playing at " + time);
+		this.appendViewInfo("step2 : stop playing at " + this.seekTime);
 		//从get的pts开始书签播放
-		this.playDASH(id, time);
+		this.playDASH(id, this.seekTime);
 		window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
-		this.appendViewInfo("step3 : bookmark play at " + time);
+		this.appendViewInfo("step3 : bookmark play at " + this.seekTime);
 	}.bind(this), 62*1000);
 };
 mVid.testfunc102 = function(id){
@@ -2030,12 +2038,12 @@ mVid.testfunc102 = function(id){
 	this.playDASH(id, 0);
 	window.setTimeout(function(){
 		var playingVideo = this.getCurrentPlayingVideo();
-		var time = playingVideo.currentTime;	
+		this.seekTime = playingVideo.currentTime;	
 		this.setEOPlayback();
-		this.appendViewInfo("step2 : stop playing at " + time);
-		this.playHLS(id, time);
+		this.appendViewInfo("step2 : stop playing at " + this.seekTime);
+		this.playHLS(id, this.seekTime);
 		window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
-		this.appendViewInfo("step3 : bookmark play at " + time);
+		this.appendViewInfo("step3 : bookmark play at " + this.seekTime);
 	}.bind(this), 62*1000);
 };	
 mVid.testfunc201 = function(id){ 
@@ -2065,8 +2073,8 @@ mVid.testfunc201 = function(id){
 			this.playDASH(id, time);
 			this.Log.info(id +" bookmark play start time " + this.startPlayTime);
 			this.appendViewInfo("step4 : bookmark play start at " + time);
-		}.bind(this), 20 * 1000);
-	}.bind(this), 20 * 1000);
+		}.bind(this), 40 * 1000);
+	}.bind(this), 40 * 1000);
 }; 
 
 mVid.testfunc202 = function(id){
@@ -2095,100 +2103,100 @@ mVid.testfunc202 = function(id){
 			this.playHLS(id, time);
 			this.Log.info(id +" bookmark play start time " + this.startPlayTime);
 			this.appendViewInfo("step4 : bookmark play start at " + time);
-		}.bind(this), 20 * 1000);
-	}.bind(this), 20 * 1000);
+		}.bind(this), 40 * 1000);
+	}.bind(this), 40 * 1000);
 }; 
 
 mVid.testfunc301 = function(id){
-	this.Log.info(id +" play start time " + this.startPlayTime);
 	var json = [];
 	var row = {};
-	row.id = id;
-	row.value = "None";
+	row.category = "networkSpeed";
+	row.value = "1mbps";
 	json.push(row);
-	this.sendResult(json);
+	this.sendCommand(json);
 	this.playDASH(id, 0);
 	this.appendViewInfo("step1 : start play");
+	this.appendViewInfo("step2 : Throttle network to 1mbps");
 	window.setTimeout(function(){
 		var json = [];
 		var row = {};
-		row.id = id;
-		row.value = "1mbps";
+		row.category = "networkSpeed";
+		row.value = "2mbps";
 		json.push(row);
-		this.sendResult(json);
-		this.appendViewInfo("step2 : Throttle network to 1mbps");
+		this.sendCommand(json);
+		this.appendViewInfo("step3 : Throttle network to 2mbps");
 		window.setTimeout(function(){
 			var json = [];
 			var row = {};
-			row.id = id;
-			row.value = "2mbps";
+			row.category = "networkSpeed";
+			row.value = "4mbps";
 			json.push(row);
-			this.sendResult(json);
-			this.appendViewInfo("step2 : Throttle network to 2mbps");
+			this.sendCommand(json);
+			this.appendViewInfo("step4 : Throttle network to 4mbps");
 			window.setTimeout(function(){
 				var json = [];
 				var row = {};
-				row.id = id;
-				row.value = "4mbps";
+				row.category = "networkSpeed";
+				row.value = "8mbps";
 				json.push(row);
-				this.sendResult(json);
-				this.appendViewInfo("step2 : Throttle network to 4mbps");
+				this.sendCommand(json);
+				this.appendViewInfo("step5 : Throttle network to 8mbps");
 				window.setTimeout(function(){
 					var json = [];
 					var row = {};
-					row.id = id;
-					row.value = "8mbps";
+					row.category = "networkSpeed";
+					row.value = "None";
 					json.push(row);
-					this.sendResult(json);
-					this.appendViewInfo("step2 : Throttle network to 8mbps");
-				}.bind(this), 30 * 1000);
+					this.sendCommand(json);
+					this.appendViewInfo("step6 : not to Throttle network");
+				}.bind(this), 20 * 1000);
 			}.bind(this), 30 * 1000);
 		}.bind(this), 30 * 1000);
 	}.bind(this), 30 * 1000);
 }
 
 mVid.testfunc302 = function(id){
-	this.Log.info(id +" play start time " + this.startPlayTime);
 	var json = [];
 	var row = {};
-	row.id = id;
-	row.value = "None";
+	row.category = "networkSpeed";
+	row.value = "1mbps";
 	json.push(row);
-	this.sendResult(json);
+	this.sendCommand(json);
 	this.playHLS(id, 0);
 	this.appendViewInfo("step1 : start play");
+	this.appendViewInfo("step2 : Throttle network to 1mbps");
 	window.setTimeout(function(){
 		var json = [];
 		var row = {};
-		row.id = id;
-		row.value = "1mbps";
+		row.category = "networkSpeed";
+		row.value = "2mbps";
 		json.push(row);
-		this.sendResult(json);
-		this.appendViewInfo("step2 : Throttle network to 1mbps");
+		this.sendCommand(json);
+		this.appendViewInfo("step3 : Throttle network to 2mbps");
 		window.setTimeout(function(){
 			var json = [];
 			var row = {};
-			row.id = id;
-			row.value = "2mbps";
+			row.category = "networkSpeed";
+			row.value = "4mbps";
 			json.push(row);
-			this.sendResult(json);
-			this.appendViewInfo("step2 : Throttle network to 2mbps");
+			this.sendCommand(json);
+			this.appendViewInfo("step4 : Throttle network to 4mbps");
 			window.setTimeout(function(){
 				var json = [];
 				var row = {};
-				row.id = id;
-				row.value = "4mbps";
+				row.category = "networkSpeed";
+				row.value = "8mbps";
 				json.push(row);
-				this.sendResult(json);
-				this.appendViewInfo("step2 : Throttle network to 4mbps");
+				this.sendCommand(json);
+				this.appendViewInfo("step5 : Throttle network to 8mbps");
 				window.setTimeout(function(){
 					var json = [];
 					var row = {};
-					row.id = id;
-					row.value = "8mbps";
+					row.category = "networkSpeed";
+					row.value = "None";
 					json.push(row);
-					this.sendResult(json);
-					this.appendViewInfo("step2 : Throttle network to 8mbps");
+					this.sendCommand(json);
+					this.appendViewInfo("step6 : not to Throttle network");
 				}.bind(this), 30 * 1000);
 			}.bind(this), 30 * 1000);
 		}.bind(this), 30 * 1000);
@@ -2196,7 +2204,6 @@ mVid.testfunc302 = function(id){
 }
 	
 mVid.testfunc401 = function(id){
-	this.Log.info(id +" play start time " + this.startPlayTime);
 	this.seekTime = 0;
 	this.playDASH(id, 0);
 	this.appendViewInfo("step1 : start play");
@@ -2231,7 +2238,6 @@ mVid.testfunc401 = function(id){
 }
 
 mVid.testfunc402 = function(id){
-	this.Log.info(id +" play start time " + this.startPlayTime);
 	this.seekTime = 0;
 	this.playHLS(id, 0);
 	this.appendViewInfo("step1 : start play");
@@ -2266,7 +2272,6 @@ mVid.testfunc402 = function(id){
 }
 
 mVid.testfunc501 = function(id){
-	this.Log.info(id +" play start time " + this.startPlayTime);
 	this.seekTime = 0;
 	this.playDASH(id, 0);
 	this.appendViewInfo("step1 : start play");
@@ -2280,12 +2285,12 @@ mVid.testfunc501 = function(id){
 		window.setTimeout(function(){
 			this.appendViewInfo("step4 : play");
 			this.cmndPlay();
+			window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
 		}.bind(this), 10 * 1000);
 	}.bind(this), 20 * 1000);
 }
-
+/*
 mVid.testfunc601 = function(id){
-	this.Log.info(id +" play start time " + this.startPlayTime);
 	this.seekTime = 0;
 	this.playDASH(id, 0);
 	this.appendViewInfo("step1 : start play");
@@ -2310,16 +2315,25 @@ mVid.testfunc601 = function(id){
 		}.bind(this), 60 * 1000);
 	}.bind(this), 10 * 1000);
 }
+
 //multi audio track select
  mVid.testfunc701 = function(id){
 	this.Log.info(id +" play start time " + this.startPlayTime);
 	this.seekTime = 0;
 	this.playDASH(id, 0);
 	this.appendViewInfo("step1 : start play");
-	var playingVideo = this.getCurrentPlayingVideo();
-	var activeVideoComponentsCollection = playingVideo.getCurrentActiveComponents(playingVideo.COMPONENT_TYPE_AUDIO);
-	
-	var allVideoComponents = playingVideo.getComponents(playingVideo.COMPONENT_TYPE_AUDIO);
+	this.appendViewInfo("step2 : get audio tarck info");
+	try{
+		var playingVideo = this.getCurrentPlayingVideo();
+		var activeAudioComponentsCollection = playingVideo.getCurrentActiveComponents(playingVideo.COMPONENT_TYPE_AUDIO);
+		
+		var allAudioComponents = playingVideo.getComponents(playingVideo.COMPONENT_TYPE_AUDIO);
+	}
+	catch(e){
+		this.Log.error(e);	
+	}
+	this.appendViewInfo(" audio track num = " + allAudioComponents.length);
+	this.appendViewInfo(" activeAudio = " + activeAudioComponentsCollection.length);
 	//playingVideo.selectComponent(inactiveComponent);
 			
  }
@@ -2347,7 +2361,7 @@ mVid.testfunc901 = function(id){
 	
 			
  }
- 
+ */
 // 断网续播
 mVid.testfunc1001 = function(id){
 	this.Log.info(id +" play start time " + this.startPlayTime);
@@ -2356,28 +2370,37 @@ mVid.testfunc1001 = function(id){
 	
 	var json = [];
 	var row = {};
-	row.id = id;
+	row.category = "networkSpeed";
 	row.value = "1mbps";
 	json.push(row);
-	this.sendResult(json);
+	this.sendCommand(json);
 	this.appendViewInfo("step2 : Throttle network to 1mbps");
 	
 	window.setTimeout(function(){
 		var json = [];
 		var row = {};
-		row.id = id;
+		row.category = "nerworkConnect";
 		row.value = "disconnect";
 		json.push(row);
-		this.sendResult(json);
-		this.appendViewInfo("step2 : disconnect");
+		this.sendCommand(json);
+		this.appendViewInfo("step3 : disconnect");
 		window.setTimeout(function(){
 			var json = [];
 			var row = {};
-			row.id = id;
+			row.category = "nerworkConnect";
 			row.value = "reconnect";
 			json.push(row);
-			this.sendResult(json);
-			this.appendViewInfo("step3 : reconnect");	
+			this.sendCommand(json);
+			this.appendViewInfo("step4 : reconnect");
+			
+			var json = [];
+			var row = {};
+			row.category = "networkSpeed";
+			row.value = "None";
+			json.push(row);
+			this.sendCommand(json);
+			this.appendViewInfo("step5 : not to Throttle network");
+			window.setTimeout(this.OnCheckResult.bind(this), 4 * 1000);
 		}.bind(this), 10 * 1000);
 	}.bind(this), 10 * 1000);
 			
@@ -2407,6 +2430,13 @@ mVid.OnMenueKeyDown = function (ev) {
     mVid.Log.info("KeyChar: " + keyChar);
 	if(keyChar == "A" || keyCode == getKey("VK_RED")){
 		mVid.menueSwitch(0,false);
+		var jsongap = [];
+		var row = {};
+		row.category = "resultReport" ;
+		row.value = "record";
+		jsongap.push(row);
+		mVid.sendCommand(jsongap);
+		
 		mVid.testall("t101");
 	}
 	if(keyChar == "K" || keyCode == getKey("VK_OK")){
@@ -2519,9 +2549,13 @@ mVid.testall = function(id){
 	for( i = 0; i < testFuncTable.length; i++){
 		var entry = testFuncTable[i];
 		if(entry && entry.id == id){
-			this.clearViewInfo();			
-			entry.func.bind(this)(id);
-			break;
+			this.clearViewInfo();
+			if(entry.func){		
+				entry.func.bind(this)(id);
+				break;
+			}else{
+				continue;
+			}
 		}
 	}
 	this.Log.info("testall i : " + i);
@@ -2529,6 +2563,13 @@ mVid.testall = function(id){
 		var nextEntry = testFuncTable[i + 1];
 		if(nextEntry)
 			window.setTimeout(this.testall.bind(this), 120 * 1000, nextEntry.id);
+	}else{
+		var jsongap = [];
+		var row = {};
+		row.category = "resultReport" ;
+		row.value = "report";
+		jsongap.push(row);
+		this.sendCommand(jsongap);
 	}
 }
 
@@ -2544,7 +2585,21 @@ mVid.testFunc = function(id){
 		testFuncEntry.func.bind(this)(id);
 	}
 	if(id == "testall"){
+		var jsongap = [];
+		var row = {};
+		row.category = "resultReport" ;
+		row.value = "record";
+		jsongap.push(row);
+		this.sendCommand(jsongap);
+		
 		this.testall("t101");
+		
+		var jsongap = [];
+		var row = {};
+		row.category = "resultReport" ;
+		row.value = "report";
+		jsongap.push(row);
+		this.sendCommand(jsongap);
 	}
 }
 
@@ -2573,16 +2628,53 @@ mVid.testcaseClick = function(){
 	
 };
 
+mVid.sendCommand = function(msg){
+	
+	var ResultServiceUrl = "./testcasecommand";
+	mVid.Log.info("TESTCASE :sendResult : " + JSON.stringify(msg));
+	
+	//post的respond callback，可能会以后会有收到result，服务端respond，客户端处理的场景
+	function callback(json, xhr) {
+		try {
+			mVid.Log.info(JSON.stringify(json));
+			if(json.length > 1){
+				var i;
+				for(i = (json.length - 1); i >= 0; i--)
+					mVid.appendResultInfo(JSON.stringify(json[i]));
+			}			
+		} catch(e) {
+			mVid.Log.error(e);			
+		}
+	}
+	
+	function ajax() {
+		try {
+			var x = new (this.XMLHttpRequest || ActiveXObject)('MSXML2.XMLHTTP.3.0');
+			x.open('POST', ResultServiceUrl, 1);
+			//设置成json
+			x.setRequestHeader('Content-type', 'application/json');
+			x.onreadystatechange = function() {
+				x.readyState > 3 && callback && callback(x.responseText, x);
+			};
+			//send
+			x.send(JSON.stringify(msg));
+		} catch (e) {
+			mVid.Log.error(e);
+		}
+	};
+
+	ajax();
+}
+
 mVid.sendResult = function(msg){
 	
-	var ResultServiceUrl = "./testcase";
+	var ResultServiceUrl = "./testcaseresult";
 	mVid.Log.info("TESTCASE :sendResult : " + JSON.stringify(msg));
 	
 	//post的respond callback，可能会以后会有收到result，服务端respond，客户端处理的场景
 	function callback(json, xhr) {
 		try {
 			mVid.Log.info(json);
-			
 		} catch(e) {
 			mVid.Log.error(e);			
 		}
