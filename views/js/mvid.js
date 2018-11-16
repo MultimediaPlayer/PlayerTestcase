@@ -1726,7 +1726,7 @@ mVid.clearViewInfo = function(){
 mVid.OnCheckResult = function(){
 	var vid = this.getCurrentPlayingVideo();
 	this.Log.info("OnCheckResult id = " + this.testCase );
-	if(this.testCase != "t1001" && this.testCase == "t1002" ){
+	if(this.testCase != "t1001" && this.testCase != "t1002" ){
 		if((vid.networkState == 2 || vid.networkState == 1) && Math.abs(vid.currentTime - this.seekTime - 4) < 14){
 			var jsongap = [];
 			var row = {};
@@ -2593,13 +2593,6 @@ mVid.testFunc = function(id){
 		this.sendCommand(jsongap);
 		
 		this.testall("t101");
-		
-		var jsongap = [];
-		var row = {};
-		row.category = "resultReport" ;
-		row.value = "report";
-		jsongap.push(row);
-		this.sendCommand(jsongap);
 	}
 }
 
@@ -2637,10 +2630,14 @@ mVid.sendCommand = function(msg){
 	function callback(json, xhr) {
 		try {
 			mVid.Log.info(JSON.stringify(json));
-			if(json.length > 1){
-				var i;
-				for(i = (json.length - 1); i >= 0; i--)
-					mVid.appendResultInfo(JSON.stringify(json[i]));
+			var result = [];
+			if(json.length > 2)
+				result = JSON.parse(json);
+			mVid.Log.info("result.length = " + result.length);
+			if(result.length > 1){
+				var i;	
+				for(i = 0; i < result.length; i++)
+					mVid.appendResultInfo(JSON.stringify(result[i]));
 			}			
 		} catch(e) {
 			mVid.Log.error(e);			
