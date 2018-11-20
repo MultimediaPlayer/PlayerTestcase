@@ -2634,20 +2634,22 @@ mVid.sendCommand = function(msg){
 			if(json.length > 2)
 				result = JSON.parse(json);
 			mVid.Log.info("result.length = " + result.length);
-			mVid.Log.info("testList.length = " + testList.length);
-			if(result.length > 1){
+			mVid.Log.info("testList.length = " + testList.Class.length);
+			if(result.length > 0){
 				var i, j, k;	
-				for(i = 0; i < result.length; i++){
-					for(j = 0; j < testList.length; j++){
-						if(testList[j].id.index(result[i].id) != -1){
-							mVid.appendResultInfo(testList[j].name + " :");
-							for(k = 0; k <  testList[j].testcase.length; k++){
-								if(testList[j].testcase[k].id == result[i].id){
-									var resultchar = testList[j].testcase[k].name + " : " + result[i].value;
-									mVid.appendResultInfo(resultchar);
-								}							
-							}
-						}
+				for(j = 0; j < testList.Class.length; j++){	
+					var added = false;					
+					for(k = 0; k <  testList.Class[j].testcase.length; k++){
+						for(i = 0; i < result.length; i++){
+							if(testList.Class[j].testcase[k].id == result[i].id){
+								if(added  == false){
+									mVid.appendResultInfo(testList.Class[j].name + " :");			
+									added = true;
+								}
+								var resultchar = testList.Class[j].testcase[k].name + " : " + result[i].value;
+								mVid.appendResultInfo(resultchar);
+							}							
+						}				
 					}
 					//mVid.appendResultInfo(JSON.stringify(result[i]));
 				}
